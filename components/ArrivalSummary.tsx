@@ -5,6 +5,7 @@ import { CheckCircle2, Flag, MessageSquareText, Route, SunMedium, Timer } from "
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { routeOptions } from "@/lib/data";
+import styles from "./ArrivalSummary.module.css";
 
 export function ArrivalSummary() {
   const params = useSearchParams();
@@ -20,33 +21,33 @@ export function ArrivalSummary() {
         <p>هذا الملخص يساعدك على تقييم الرحلة، ويساعد المنصة على مقارنة التوقعات بالتجربة الفعلية.</p>
       </div>
 
-      <section className="arrival-summary" aria-label="ملخص الرحلة">
-        <div className="arrival-stat">
+      <section className={styles.summary} aria-label="ملخص الرحلة">
+        <div className={styles.stat}>
           <Timer size={19} />
           <span>المدة</span>
           <strong>{route.duration} دقيقة</strong>
         </div>
-        <div className="arrival-stat">
+        <div className={styles.stat}>
           <Route size={19} />
           <span>المسافة</span>
           <strong>{route.distance} م</strong>
         </div>
-        <div className="arrival-stat">
+        <div className={styles.stat}>
           <SunMedium size={19} />
           <span>الظل المتوقع</span>
           <strong>{route.shade}%</strong>
         </div>
-        <div className="arrival-stat">
+        <div className={styles.stat}>
           <Flag size={19} />
           <span>درجة الراحة</span>
           <strong>{route.comfort}/100</strong>
         </div>
       </section>
 
-      <section className="feedback-section">
+      <section className={styles.feedback}>
         <h2>كيف كانت الرحلة؟</h2>
         <p>اختر تقييمًا واحدًا. في النسخة التشغيلية سيُستخدم هذا التقييم لقياس دقة مؤشر الراحة.</p>
-        <div className="rating-row" role="group" aria-label="تقييم الرحلة">
+        <div className={styles.rating} role="group" aria-label="تقييم الرحلة">
           {[
             [1, "مرهقة"],
             [2, "دون المتوقع"],
@@ -57,7 +58,7 @@ export function ArrivalSummary() {
             <button
               key={value}
               type="button"
-              className={rating === value ? "is-selected" : ""}
+              className={rating === value ? styles.selected : ""}
               onClick={() => setRating(value as number)}
             >
               <strong>{value}</strong>
