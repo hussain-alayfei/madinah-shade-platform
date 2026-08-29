@@ -1,6 +1,6 @@
 .summary {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -35,6 +35,7 @@
   margin-top: 3px;
   color: var(--green-950);
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 
 .feedback {
@@ -55,11 +56,12 @@
 
 .rating {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
 .rating button {
+  min-width: 0;
   min-height: 74px;
   display: flex;
   flex-direction: column;
@@ -86,11 +88,16 @@
 .rating span {
   margin-top: 4px;
   font-size: 10px;
+  text-align: center;
 }
 
 @media (max-width: 640px) {
   .summary {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat {
+    padding: 16px 12px;
   }
 
   .stat:nth-child(2) {
@@ -102,19 +109,45 @@
   }
 
   .rating {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rating button {
-    min-height: 52px;
+    min-height: 54px;
     flex-direction: row;
     justify-content: flex-start;
-    gap: 10px;
-    padding: 0 14px;
+    gap: 9px;
+    padding: 0 12px;
+  }
+
+  .rating button:last-child {
+    grid-column: 1 / -1;
   }
 
   .rating span {
     margin-top: 0;
-    font-size: 12px;
+    font-size: 11px;
+    text-align: start;
+  }
+}
+
+@media (max-width: 350px) {
+  .summary,
+  .rating {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stat,
+  .stat:nth-child(2) {
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .stat:last-child {
+    border-bottom: 0;
+  }
+
+  .rating button:last-child {
+    grid-column: auto;
   }
 }
