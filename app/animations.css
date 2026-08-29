@@ -1,0 +1,84 @@
+@keyframes ui-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Page-level fades stay subtle: opacity only, no translate/scale. */
+.home-panel,
+.home-map,
+.plan-panel,
+.plan-map,
+.content-shell,
+.city-main,
+.navigation-map,
+.navigation-sheet {
+  animation: ui-fade-in 320ms ease both;
+}
+
+.home-map,
+.plan-map,
+.navigation-map {
+  animation-delay: 70ms;
+}
+
+.trip-planner__intro,
+.section-header,
+.page-title,
+.city-topline {
+  animation: ui-fade-in 260ms ease both;
+}
+
+.planner-field,
+.route-card,
+.report-row,
+.priority-row,
+.arrival-stat {
+  animation: ui-fade-in 280ms ease both;
+}
+
+.trip-planner .planner-field:nth-of-type(1),
+.route-list .route-card:nth-child(1),
+.report-list .report-row:nth-child(1),
+.priority-list .priority-row:nth-child(1) {
+  animation-delay: 45ms;
+}
+
+.trip-planner .planner-field:nth-of-type(2),
+.route-list .route-card:nth-child(2),
+.report-list .report-row:nth-child(2),
+.priority-list .priority-row:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.route-list .route-card:nth-child(3),
+.report-list .report-row:nth-child(3),
+.priority-list .priority-row:nth-child(3) {
+  animation-delay: 135ms;
+}
+
+.route-list .route-card:nth-child(4),
+.report-list .report-row:nth-child(4),
+.priority-list .priority-row:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.app-header__mobile {
+  animation: ui-fade-in 160ms ease both;
+}
+
+.notice,
+.success-box {
+  animation: ui-fade-in 220ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
