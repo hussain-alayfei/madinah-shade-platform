@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, LocateFixed, MapPin, Navigation } from "lucide-react";
+import { Check, ChevronDown, Clock3, LocateFixed, MapPin, Navigation, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { departureOptions, travelPreferences, type PreferenceId } from "@/lib/data";
 
 export function TripPlanner() {
   const [from, setFrom] = useState("موقعي الحالي");
   const [to, setTo] = useState("المسجد النبوي");
-  const [time, setTime] = useState("الآن");
+  const [time, setTime] = useState<(typeof departureOptions)[number]>("الآن");
+  const [showNeeds, setShowNeeds] = useState(false);
+  const [needs, setNeeds] = useState<PreferenceId[]>([]);
+
+  function toggleNeed(id: PreferenceId) {
+    setNeeds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  }
+
+  const planHref = `/plan?time=${encodeURIComponent(time)}${needs.length ? `&needs=${needs.join(",")}` : ""}`;
 
   return (
     <section className="trip-planner" aria-labelledby="trip-title">
@@ -35,7 +44,7 @@ export function TripPlanner() {
       <fieldset className="planner-field">
         <legend>وقت الانطلاق</legend>
         <div className="time-options">
-          {["الآن", "5:00 م", "6:00 م"].map((option) => (
+          {departureOptions.map((option) => (
             <button
               key={option}
               type="button"
@@ -49,7 +58,45 @@ export function TripPlanner() {
         </div>
       </fieldset>
 
-      <Link href="/plan" className="primary-action">
+      <div className="planner-needs">
+        <button
+          type="button"
+          className="planner-needs__toggle"
+          aria-expanded={showNeeds}
+          onClick={() => setShowNeeds((value) => !value)}
+        >
+          <span><SlidersHorizontal size={17} /> احتياجات الرحلة</span>
+          <span className="planner-needs__summary">
+            {needs.length ? `${needs.length} محددة` : "اختياري"}
+            <ChevronDown size={16} className={showNeeds ? "is-open" : ""} />
+          </span>
+        </button>
+
+        {showNeeds && (
+          <div className="planner-needs__options" aria-label="تخصيص احتياجات الرحلة">
+            {travelPreferences.map((item) => {
+              const selected = needs.includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={selected ? "is-selected" : ""}
+                  aria-pressed={selected}
+                  onClick={() => toggleNeed(item.id)}
+                >
+                  <span className="planner-needs__check">{selected && <Check size={14} />}</span>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <small>{item.description}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <Link href={planHref} className="primary-action">
         <Navigation size={19} />
         عرض المسارات المناسبة
       </Link>
