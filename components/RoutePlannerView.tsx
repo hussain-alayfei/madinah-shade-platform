@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, SearchCheck } from "lucide-react";
+import { ArrowRight, SearchCheck } from "lucide-react";
 import { useState } from "react";
 import { routeOptions } from "@/lib/data";
 import { MapView } from "./MapView";
@@ -16,7 +16,7 @@ export function RoutePlannerView() {
       <section className="plan-panel">
         <div className="section-header">
           <Link href="/" className="text-action">
-            <ArrowLeft size={16} />
+            <ArrowRight size={16} />
             تعديل الرحلة
           </Link>
           <h1>اختر المسار المناسب</h1>
