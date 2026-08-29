@@ -1,0 +1,23 @@
+/* Small visual corrections found during responsive review. */
+
+.route-list {
+  padding-bottom: 82px;
+}
+
+@media (max-width: 640px) {
+  .map-context {
+    top: 12px;
+    right: 12px;
+    left: auto;
+    max-width: 180px;
+    padding: 9px 10px;
+  }
+
+  .map-context span {
+    display: none;
+  }
+
+  .route-list {
+    padding-bottom: 72px;
+  }
+}
