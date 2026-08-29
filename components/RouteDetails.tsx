@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Accessibility, ArrowRight, Droplets, Navigation, RestArea, SunMedium, Toilet, UsersRound } from "lucide-react";
+import { Accessibility, Armchair, ArrowRight, Droplets, Navigation, SunMedium, Toilet, UsersRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { routeOptions } from "@/lib/data";
 import { MapView } from "./MapView";
@@ -60,7 +60,7 @@ export function RouteDetails() {
           <h2>الخدمات على الطريق</h2>
           <div className={styles.services}>
             <div className={styles.service}><Droplets size={16} /> {route.waterStops} نقاط مياه</div>
-            <div className={styles.service}><RestArea size={16} /> {route.restStops} مواقع استراحة</div>
+            <div className={styles.service}><Armchair size={16} /> {route.restStops} مواقع استراحة</div>
             <div className={styles.service}><Toilet size={16} /> دورة مياه ضمن النطاق القريب</div>
           </div>
         </section>
