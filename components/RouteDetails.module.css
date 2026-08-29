@@ -1,0 +1,170 @@
+.layout {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 34px 0 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+  gap: 26px;
+}
+
+.map {
+  min-height: 610px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #e8ece8;
+}
+
+.map :global(.map-frame),
+.map :global(.route-map) {
+  min-height: 610px;
+}
+
+.details {
+  min-width: 0;
+}
+
+.back {
+  margin-bottom: 14px;
+}
+
+.details h1 {
+  margin-bottom: 5px;
+  color: var(--green-950);
+  font-size: 27px;
+  line-height: 1.3;
+}
+
+.description {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.summary div {
+  padding: 14px 0;
+  border-left: 1px solid var(--line);
+}
+
+.summary div:nth-child(2),
+.summary div:nth-child(3) {
+  padding-right: 14px;
+}
+
+.summary div:last-child {
+  border-left: 0;
+}
+
+.summary span,
+.summary strong {
+  display: block;
+}
+
+.summary span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.summary strong {
+  margin-top: 3px;
+  color: var(--green-950);
+  font-size: 16px;
+}
+
+.section {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.section h2 {
+  margin-bottom: 10px;
+  color: var(--green-950);
+  font-size: 15px;
+}
+
+.fact {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #42554c;
+  font-size: 12px;
+}
+
+.fact span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.services {
+  display: grid;
+  gap: 8px;
+}
+
+.service {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: #40534a;
+  font-size: 12px;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 18px;
+  background: var(--paper);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    width: 100%;
+    padding: 0 0 42px;
+    grid-template-columns: 1fr;
+  }
+
+  .map {
+    order: -1;
+    min-height: 42vh;
+    border-width: 0 0 1px;
+    border-radius: 0;
+  }
+
+  .map :global(.map-frame),
+  .map :global(.route-map) {
+    min-height: 42vh;
+  }
+
+  .details {
+    padding: 0 20px;
+  }
+
+  .back {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .details {
+    padding: 0 16px;
+  }
+
+  .summary strong {
+    font-size: 14px;
+  }
+}
