@@ -43,12 +43,13 @@
 
 .summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
 .summary div {
+  min-width: 0;
   padding: 14px 0;
   border-left: 1px solid var(--line);
 }
@@ -76,6 +77,7 @@
   margin-top: 3px;
   color: var(--green-950);
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 
 .section {
@@ -100,6 +102,7 @@
 }
 
 .fact span:first-child {
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -127,44 +130,110 @@
 .actions {
   position: sticky;
   bottom: 0;
+  z-index: 4;
   padding-top: 18px;
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
   background: var(--paper);
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 20px;
+  }
+
+  .map,
+  .map :global(.map-frame),
+  .map :global(.route-map) {
+    min-height: 560px;
+  }
 }
 
 @media (max-width: 900px) {
   .layout {
     width: 100%;
-    padding: 0 0 42px;
-    grid-template-columns: 1fr;
+    padding: 0 0 calc(42px + env(safe-area-inset-bottom));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .map {
     order: -1;
-    min-height: 42vh;
+    min-height: clamp(310px, 42dvh, 430px);
     border-width: 0 0 1px;
     border-radius: 0;
   }
 
   .map :global(.map-frame),
   .map :global(.route-map) {
-    min-height: 42vh;
+    min-height: clamp(310px, 42dvh, 430px);
   }
 
   .details {
+    width: min(680px, 100%);
+    margin-inline: auto;
     padding: 0 20px;
   }
 
   .back {
     margin-top: 18px;
   }
+
+  .actions {
+    margin-inline: -20px;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: rgba(251, 250, 247, 0.98);
+  }
 }
 
 @media (max-width: 520px) {
+  .map,
+  .map :global(.map-frame),
+  .map :global(.route-map) {
+    min-height: clamp(260px, 36dvh, 330px);
+  }
+
   .details {
     padding: 0 16px;
   }
 
+  .details h1 {
+    font-size: 24px;
+  }
+
   .summary strong {
     font-size: 14px;
+  }
+
+  .summary div,
+  .summary div:nth-child(2),
+  .summary div:nth-child(3) {
+    padding: 12px 8px;
+  }
+
+  .section {
+    padding-block: 18px;
+  }
+
+  .actions {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 350px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary div:nth-child(2) {
+    border-left: 0;
+  }
+
+  .summary div:nth-child(3) {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 }
