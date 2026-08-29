@@ -4,6 +4,7 @@ import "./globals.css";
 import "./animations.css";
 import "./polish.css";
 import "./responsive.css";
+import "./enhancements.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = IBM_Plex_Sans_Arabic({
