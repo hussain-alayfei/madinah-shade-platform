@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowUp, CircleAlert, Flag, Navigation } from "lucide-react";
+import Link from "next/link";
+import { ArrowUp, CircleAlert, Flag } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { routeOptions } from "@/lib/data";
@@ -66,19 +67,26 @@ export function NavigationExperience() {
             </div>
           </div>
 
-          <div className="nav-status">
-            <div>
-              <span>المتبقي</span>
-              <strong>{remaining} د</strong>
+          <div>
+            <div className="nav-status">
+              <div>
+                <span>المتبقي</span>
+                <strong>{remaining} د</strong>
+              </div>
+              <div>
+                <span>الظل</span>
+                <strong>{route.shade}%</strong>
+              </div>
+              <div>
+                <span>الراحة</span>
+                <strong>{route.comfort}</strong>
+              </div>
             </div>
-            <div>
-              <span>الظل</span>
-              <strong>{route.shade}%</strong>
-            </div>
-            <div>
-              <span>الراحة</span>
-              <strong>{route.comfort}</strong>
-            </div>
+            {progress > 90 && (
+              <Link href={`/arrival?route=${route.id}`} className="primary-action" style={{ marginTop: 10 }}>
+                إنهاء الرحلة
+              </Link>
+            )}
           </div>
         </div>
 
