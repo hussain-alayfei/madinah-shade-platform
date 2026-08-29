@@ -1,3 +1,16 @@
+export const departureOptions = ["الآن", "5:00 م", "6:00 م"] as const;
+export type DepartureTime = (typeof departureOptions)[number];
+
+export type PreferenceId = "wheelchair" | "senior" | "shade" | "lowCrowd" | "rest";
+
+export const travelPreferences: { id: PreferenceId; label: string; description: string }[] = [
+  { id: "wheelchair", label: "مسار مهيأ للكرسي المتحرك", description: "تجنب المسارات ذات الإتاحة المحدودة." },
+  { id: "senior", label: "مناسب لكبار السن", description: "أفضلية للظل والاستراحات والإجهاد الأقل." },
+  { id: "shade", label: "أفضل ظل ممكن", description: "رفع أولوية المسارات ذات التغطية الأعلى." },
+  { id: "lowCrowd", label: "تجنب الازدحام", description: "رفع أولوية المسارات الأقل كثافة." },
+  { id: "rest", label: "استراحات وخدمات أكثر", description: "أفضلية للمياه ومواقع الاستراحة." },
+];
+
 export type RouteOption = {
   id: string;
   name: string;
@@ -12,6 +25,7 @@ export type RouteOption = {
   waterStops: number;
   restStops: number;
   tone: "comfort" | "balanced" | "fast" | "heritage";
+  timeComfort: Record<DepartureTime, number>;
 };
 
 export const routeOptions: RouteOption[] = [
@@ -29,6 +43,7 @@ export const routeOptions: RouteOption[] = [
     waterStops: 2,
     restStops: 2,
     tone: "comfort",
+    timeComfort: { "الآن": 82, "5:00 م": 92, "6:00 م": 89 },
   },
   {
     id: "balanced",
@@ -44,6 +59,7 @@ export const routeOptions: RouteOption[] = [
     waterStops: 1,
     restStops: 1,
     tone: "balanced",
+    timeComfort: { "الآن": 74, "5:00 م": 86, "6:00 م": 83 },
   },
   {
     id: "fastest",
@@ -59,6 +75,7 @@ export const routeOptions: RouteOption[] = [
     waterStops: 1,
     restStops: 0,
     tone: "fast",
+    timeComfort: { "الآن": 58, "5:00 م": 72, "6:00 م": 69 },
   },
   {
     id: "heritage",
@@ -74,8 +91,58 @@ export const routeOptions: RouteOption[] = [
     waterStops: 2,
     restStops: 2,
     tone: "heritage",
+    timeComfort: { "الآن": 70, "5:00 م": 84, "6:00 م": 80 },
   },
 ];
+
+export function parseDepartureTime(value: string | null): DepartureTime {
+  return departureOptions.includes(value as DepartureTime) ? (value as DepartureTime) : "الآن";
+}
+
+export function parsePreferences(value: string | null): PreferenceId[] {
+  if (!value) return [];
+  const allowed = new Set(travelPreferences.map((item) => item.id));
+  return value.split(",").filter((item): item is PreferenceId => allowed.has(item as PreferenceId));
+}
+
+export function routeScore(route: RouteOption, needs: PreferenceId[], time: DepartureTime) {
+  let score = route.timeComfort[time];
+
+  if (needs.includes("wheelchair")) score += route.accessible ? 18 : -70;
+  if (needs.includes("senior")) {
+    score += route.restStops * 5 + route.waterStops * 2 + route.shade * 0.05;
+    if (route.heat === "مرتفع") score -= 14;
+  }
+  if (needs.includes("shade")) score += route.shade * 0.12;
+  if (needs.includes("lowCrowd")) score += route.crowd === "منخفض" ? 12 : route.crowd === "متوسط" ? 2 : -14;
+  if (needs.includes("rest")) score += route.restStops * 7 + route.waterStops * 3;
+
+  return Math.round(score * 10) / 10;
+}
+
+export function recommendationReasons(route: RouteOption, needs: PreferenceId[]) {
+  const reasons: string[] = [];
+
+  if (needs.includes("wheelchair") && route.accessible) reasons.push("إتاحة مناسبة");
+  if (needs.includes("senior") && route.restStops > 0) reasons.push(`${route.restStops} استراحة`);
+  if (needs.includes("shade")) reasons.push(`ظل ${route.shade}%`);
+  if (needs.includes("lowCrowd") && route.crowd === "منخفض") reasons.push("ازدحام منخفض");
+  if (needs.includes("rest") && route.waterStops > 0) reasons.push(`${route.waterStops} مياه`);
+
+  if (reasons.length === 0) {
+    if (route.shade >= 80) reasons.push(`ظل ${route.shade}%`);
+    if (route.crowd === "منخفض") reasons.push("ازدحام منخفض");
+    if (route.accessible) reasons.push("إتاحة جيدة");
+  }
+
+  return reasons.slice(0, 2);
+}
+
+export function bestDeparture(route: RouteOption): { time: DepartureTime; score: number } {
+  return departureOptions
+    .map((time) => ({ time, score: route.timeComfort[time] }))
+    .sort((a, b) => b.score - a.score)[0];
+}
 
 export const medinaRoutes = {
   comfortable: [
