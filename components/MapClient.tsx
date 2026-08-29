@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { CircleMarker, MapContainer, Polyline, Popup, TileLayer } from "react-leaflet";
+import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, ZoomControl } from "react-leaflet";
 import { medinaRoutes } from "@/lib/data";
 
 const routeStyles: Record<string, { color: string; weight: number; opacity: number }> = {
@@ -20,6 +20,7 @@ export function MapClient({ selected = "comfortable", showAll = true }: { select
       center={[24.4695, 39.6134]}
       zoom={16}
       scrollWheelZoom
+      zoomControl={false}
       className="route-map"
       attributionControl
     >
@@ -27,6 +28,7 @@ export function MapClient({ selected = "comfortable", showAll = true }: { select
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <ZoomControl position="bottomleft" />
 
       {Object.entries(medinaRoutes).map(([id, positions]) => {
         if (!showAll && id !== selected) return null;
