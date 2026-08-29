@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Accessibility, Armchair, ArrowRight, Droplets, Navigation, SunMedium, Toilet, UsersRound } from "lucide-react";
+import { Accessibility, Armchair, ArrowRight, Clock3, Droplets, Navigation, SunMedium, Toilet, UsersRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { routeOptions } from "@/lib/data";
+import { bestDeparture, parseDepartureTime, parsePreferences, routeOptions } from "@/lib/data";
 import { MapView } from "./MapView";
 import styles from "./RouteDetails.module.css";
 
@@ -11,12 +11,16 @@ export function RouteDetails() {
   const params = useSearchParams();
   const routeId = params.get("route") ?? "comfortable";
   const route = routeOptions.find((item) => item.id === routeId) ?? routeOptions[0];
+  const selectedTime = parseDepartureTime(params.get("time"));
+  const needs = parsePreferences(params.get("needs"));
+  const bestTime = bestDeparture(route);
+  const needsQuery = needs.length ? `&needs=${needs.join(",")}` : "";
 
   return (
     <main className={styles.layout}>
       <section className={styles.details}>
         <div className={styles.back}>
-          <Link href="/plan" className="text-action">
+          <Link href={`/plan?time=${encodeURIComponent(selectedTime)}${needsQuery}`} className="text-action">
             <ArrowRight size={16} />
             العودة للمسارات
           </Link>
@@ -35,8 +39,8 @@ export function RouteDetails() {
             <strong>{route.distance} م</strong>
           </div>
           <div>
-            <span>الراحة</span>
-            <strong>{route.comfort}/100</strong>
+            <span>الراحة · {selectedTime}</span>
+            <strong>{route.timeComfort[selectedTime]}/100</strong>
           </div>
         </div>
 
@@ -65,12 +69,23 @@ export function RouteDetails() {
           </div>
         </section>
 
+        {bestTime.time !== selectedTime && (
+          <div className="route-time-advice">
+            <Clock3 size={17} />
+            <div>
+              <strong>وقت أريح متاح</strong>
+              <span>عند {bestTime.time} ترتفع الراحة المتوقعة إلى {bestTime.score}/100.</span>
+            </div>
+          </div>
+        )}
+
         <div className="notice" style={{ marginTop: 18 }}>
+          {needs.length ? `تمت مراعاة ${needs.length} من احتياجات الرحلة. ` : ""}
           حالة الظل والازدحام تقديرية في هذه النسخة التجريبية، وقد تتغير أثناء الرحلة.
         </div>
 
         <div className={styles.actions}>
-          <Link href={`/navigate?route=${route.id}`} className="primary-action">
+          <Link href={`/navigate?route=${route.id}&time=${encodeURIComponent(selectedTime)}${needsQuery}`} className="primary-action">
             <Navigation size={18} />
             ابدأ الرحلة
           </Link>
