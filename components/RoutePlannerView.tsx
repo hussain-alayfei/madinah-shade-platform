@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Navigation } from "lucide-react";
+import { ArrowLeft, SearchCheck } from "lucide-react";
 import { useState } from "react";
 import { routeOptions } from "@/lib/data";
 import { MapView } from "./MapView";
@@ -35,9 +35,9 @@ export function RoutePlannerView() {
         </div>
 
         <div className="plan-actions">
-          <Link href={`/navigate?route=${selectedRoute.id}`} className="primary-action">
-            <Navigation size={19} />
-            ابدأ {selectedRoute.name}
+          <Link href={`/route?route=${selectedRoute.id}`} className="primary-action">
+            <SearchCheck size={19} />
+            راجع {selectedRoute.name}
           </Link>
         </div>
       </section>
