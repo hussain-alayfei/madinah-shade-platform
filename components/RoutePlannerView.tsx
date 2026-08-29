@@ -1,121 +1,24 @@
 "use client";
-
 import Link from "next/link";
-import { ArrowRight, Clock3, SearchCheck } from "lucide-react";
+import { ArrowRight, Clock3, Info, RotateCcw, SearchCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import {
-  bestDeparture,
-  departureOptions,
-  parseDepartureTime,
-  parsePreferences,
-  recommendationReasons,
-  routeOptions,
-  routeScore,
-  type DepartureTime,
-} from "@/lib/data";
-import { MapView } from "./MapView";
-import { RouteCard } from "./RouteCard";
-
-export function RoutePlannerView() {
-  const params = useSearchParams();
-  const needs = useMemo(() => parsePreferences(params.get("needs")), [params]);
-  const [selectedTime, setSelectedTime] = useState<DepartureTime>(() => parseDepartureTime(params.get("time")));
-
-  const rankedRoutes = useMemo(
-    () => [...routeOptions].sort((a, b) => routeScore(b, needs, selectedTime) - routeScore(a, needs, selectedTime)),
-    [needs, selectedTime],
-  );
-
-  const bestRoute = rankedRoutes[0];
-  const [selected, setSelected] = useState(bestRoute.id);
-
-  useEffect(() => {
-    setSelected(bestRoute.id);
-  }, [bestRoute.id]);
-
-  const selectedRoute = routeOptions.find((route) => route.id === selected) ?? bestRoute;
-  const selectedComfort = selectedRoute.timeComfort[selectedTime];
-  const bestTime = bestDeparture(selectedRoute);
-  const needsQuery = needs.length ? `&needs=${needs.join(",")}` : "";
-
-  return (
-    <main className="plan-shell">
-      <section className="plan-panel">
-        <div className="section-header">
-          <Link href="/" className="text-action">
-            <ArrowRight size={16} />
-            تعديل الرحلة
-          </Link>
-          <h1>اختر المسار المناسب</h1>
-          <p>
-            من موقعك الحالي إلى المسجد النبوي · {selectedTime}
-            {needs.length ? ` · ${needs.length} احتياجات مخصصة` : ""}
-          </p>
-        </div>
-
-        <section className="departure-comparison" aria-labelledby="departure-title">
-          <div className="departure-comparison__title">
-            <div>
-              <h2 id="departure-title">وقت الانطلاق يغيّر الراحة</h2>
-              <p>نحدّث ترتيب المسارات حسب الظل والحرارة المتوقعة في كل وقت.</p>
-            </div>
-            <Clock3 size={18} />
-          </div>
-          <div className="departure-comparison__options">
-            {departureOptions.map((time) => {
-              const score = selectedRoute.timeComfort[time];
-              const isBest = time === bestTime.time;
-              return (
-                <button
-                  key={time}
-                  type="button"
-                  className={`${selectedTime === time ? "is-selected" : ""} ${isBest ? "is-best" : ""}`}
-                  onClick={() => setSelectedTime(time)}
-                >
-                  <span>{time}</span>
-                  <strong>{score}</strong>
-                  <small>{isBest ? "أفضل وقت" : "راحة"}</small>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <div className="route-list">
-          {rankedRoutes.map((route, index) => (
-            <RouteCard
-              key={route.id}
-              route={route}
-              comfortScore={route.timeComfort[selectedTime]}
-              recommended={index === 0}
-              reasons={index === 0 ? recommendationReasons(route, needs) : []}
-              selected={route.id === selected}
-              onSelect={() => setSelected(route.id)}
-            />
-          ))}
-        </div>
-
-        <div className="plan-actions">
-          <Link
-            href={`/route?route=${selectedRoute.id}&time=${encodeURIComponent(selectedTime)}${needsQuery}`}
-            className="primary-action"
-          >
-            <SearchCheck size={19} />
-            راجع {selectedRoute.name}
-          </Link>
-        </div>
-      </section>
-
-      <section className="plan-map" aria-label="مقارنة المسارات على الخريطة">
-        <div className="map-frame">
-          <MapView selected={selected} showAll />
-          <div className="map-context">
-            <strong>{selectedRoute.name}</strong>
-            <span>{selectedRoute.duration} دقيقة · {selectedRoute.distance} م · راحة {selectedComfort}/100</span>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+import { useEffect,useMemo,useState } from "react";
+import { bestDeparture,departureOptions,parseDepartureTime,parsePreferences,recommendationReasons,routeOptions,routeScore,type DepartureTime } from "@/lib/data";
+import { buildTripQuery,fetchWalkingRoute,formatDistance,formatDuration,parseTripContext,type LiveRoute,type RouteMode } from "@/lib/maps";
+import { MapView } from "./MapView"; import { RouteCard } from "./RouteCard";
+const routeModes=routeOptions.map(r=>r.id as RouteMode);
+export function RoutePlannerView(){
+ const params=useSearchParams(); const needs=useMemo(()=>parsePreferences(params.get("needs")),[params]); const trip=useMemo(()=>parseTripContext(params),[params]); const [selectedTime,setSelectedTime]=useState<DepartureTime>(()=>parseDepartureTime(params.get("time"))); const [selected,setSelected]=useState<RouteMode>("comfortable"); const [liveRoutes,setLiveRoutes]=useState<Partial<Record<RouteMode,LiveRoute>>>({}); const [routeErrors,setRouteErrors]=useState<Partial<Record<RouteMode,string>>>({}); const [loading,setLoading]=useState(false); const [requestId,setRequestId]=useState(0);
+ useEffect(()=>{ if(!trip.start||!trip.end)return; let cancelled=false; async function load(){setLoading(true);setLiveRoutes({});setRouteErrors({}); const results=await Promise.allSettled(routeModes.map(mode=>fetchWalkingRoute({start:trip.start!,end:trip.end!,mode,needs}))); if(cancelled)return; const r:Partial<Record<RouteMode,LiveRoute>>={}; const e:Partial<Record<RouteMode,string>>={}; results.forEach((x,i)=>{const m=routeModes[i]; if(x.status==="fulfilled")r[m]=x.value; else e[m]=x.reason instanceof Error?x.reason.message:"تعذر حساب المسار";}); setLiveRoutes(r);setRouteErrors(e);setLoading(false);} load(); return()=>{cancelled=true};},[needs,requestId,trip.end,trip.start]);
+ const rankedRoutes=useMemo(()=>[...routeOptions].sort((a,b)=>{const al=liveRoutes[a.id as RouteMode],bl=liveRoutes[b.id as RouteMode];return (routeScore(b,needs,selectedTime)-(bl?bl.durationSeconds/3600:0))-(routeScore(a,needs,selectedTime)-(al?al.durationSeconds/3600:0));}),[liveRoutes,needs,selectedTime]); const bestAvailable=rankedRoutes.find(r=>liveRoutes[r.id as RouteMode]);
+ useEffect(()=>{if(!loading&&bestAvailable&&!liveRoutes[selected])setSelected(bestAvailable.id as RouteMode);},[bestAvailable,liveRoutes,loading,selected]);
+ const selectedRoute=routeOptions.find(r=>r.id===selected)??routeOptions[0]; const selectedLive=liveRoutes[selected]; const bestTime=bestDeparture(selectedRoute); const geometryMap=useMemo(()=>{const m:Partial<Record<RouteMode,[number,number][]>>={};routeModes.forEach(mode=>{if(liveRoutes[mode])m[mode]=liveRoutes[mode]!.geometry});return m;},[liveRoutes]);
+ if(!trip.start||!trip.end)return <main className="content-shell content-shell--narrow"><div className="page-title"><h1>الرحلة تحتاج نقطة بداية ووجهة</h1><p>ارجع إلى بداية الرحلة وحدد الوجهة. إذا اخترت «موقعي الحالي» سيطلب المتصفح إذن GPS.</p></div><Link href="/" className="primary-action">العودة لتخطيط الرحلة</Link></main>;
+ const selectedQuery=buildTripQuery({trip,time:selectedTime,needs,route:selectedRoute.id});
+ return <main className="plan-shell"><section className="plan-panel"><div className="section-header"><Link href="/" className="text-action"><ArrowRight size={16}/>تعديل الرحلة</Link><h1>اختر المسار المناسب</h1><p>{trip.fromLabel} ← {trip.toLabel} · {selectedTime}{needs.length?` · ${needs.length} احتياجات مخصصة`:""}</p></div>
+ <div className="live-routing-banner"><Info size={17}/><div><strong>المسار والمسافة والزمن الآن محسوبة فعليًا</strong><span>المصدر: OpenStreetMap + محرك Valhalla للمشي. النجمة (*) تعني أن المؤشر ما زال تجريبيًا وليس بيانات مدينة حية.</span></div>{!loading&&Object.keys(routeErrors).length>0&&<button type="button" onClick={()=>setRequestId(v=>v+1)}><RotateCcw size={14}/> إعادة المحاولة</button>}</div>
+ <section className="departure-comparison"><div className="departure-comparison__title"><div><h2>تقدير الراحة حسب وقت الانطلاق</h2><p>هذا الجزء تقديري حاليًا؛ تغيير الوقت لا يدّعي وجود بيانات ظل أو ازدحام حية.</p></div><Clock3 size={18}/></div><div className="departure-comparison__options">{departureOptions.map(time=>{const score=selectedRoute.timeComfort[time],isBest=time===bestTime.time;return <button key={time} type="button" className={`${selectedTime===time?"is-selected":""} ${isBest?"is-best":""}`} onClick={()=>setSelectedTime(time)}><span>{time}</span><strong>{score}</strong><small>{isBest?"أفضل تقدير":"تقديري"}</small></button>})}</div></section>
+ <div className="route-list">{rankedRoutes.map(route=>{const mode=route.id as RouteMode;const rec=Boolean(bestAvailable&&route.id===bestAvailable.id);return <RouteCard key={route.id} route={route} comfortScore={route.timeComfort[selectedTime]} recommended={rec} reasons={rec?recommendationReasons(route,needs):[]} selected={route.id===selected} liveRoute={liveRoutes[mode]} loading={loading} error={routeErrors[mode]} onSelect={()=>liveRoutes[mode]&&setSelected(mode)}/>})}</div>
+ <div className="plan-actions"><Link href={selectedLive?`/route?${selectedQuery}`:"#"} className={`primary-action ${!selectedLive?"is-disabled":""}`} aria-disabled={!selectedLive} onClick={e=>{if(!selectedLive)e.preventDefault()}}><SearchCheck size={19}/>{selectedLive?`راجع ${selectedRoute.name}`:"انتظر حتى يكتمل حساب المسار"}</Link></div></section>
+ <section className="plan-map"><div className="map-frame"><MapView selected={selected} showAll routes={geometryMap} start={trip.start} end={trip.end}/><div className="map-context"><strong>{selectedRoute.name}</strong><span>{selectedLive?`${formatDuration(selectedLive.durationSeconds)} · ${formatDistance(selectedLive.distanceMeters)} · راحة تقديرية ${selectedRoute.timeComfort[selectedTime]}/100`:loading?"جاري حساب المسار…":"تعذر حساب هذا المسار"}</span></div></div></section></main>;
 }

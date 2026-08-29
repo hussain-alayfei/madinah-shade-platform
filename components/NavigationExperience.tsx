@@ -1,65 +1,125 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeftRight, ArrowUp, CircleAlert, Flag } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { parseDepartureTime, parsePreferences, routeOptions } from "@/lib/data";
+import { ArrowUp, CircleAlert, Flag, LocateFixed, RefreshCcw, Route as RouteIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { parsePreferences, routeOptions } from "@/lib/data";
+import {
+  activeManeuver,
+  fetchWalkingRoute,
+  formatDistance,
+  formatDuration,
+  haversineMeters,
+  parseTripContext,
+  routeProgress,
+  type LiveRoute,
+  type LocationFix,
+  type RouteMode,
+} from "@/lib/maps";
 import { MapView } from "./MapView";
-
-const steps = [
-  { distance: "180 م", title: "استمر للأمام", note: "الجزء القادم مظلل بشكل جيد." },
-  { distance: "90 م", title: "اتجه يسارًا عند التقاطع", note: "ازدحام منخفض في هذا المسار حاليًا." },
-  { distance: "240 م", title: "استمر بمحاذاة الممر", note: "توجد نقطة مياه بعد 120 مترًا." },
-  { distance: "120 م", title: "تابع مباشرة نحو الوجهة", note: "أنت قريب من نهاية الرحلة." },
-];
 
 export function NavigationExperience() {
   const params = useSearchParams();
-  const router = useRouter();
-  const routeId = params.get("route") ?? "comfortable";
-  const route = routeOptions.find((item) => item.id === routeId) ?? routeOptions[0];
-  const selectedTime = parseDepartureTime(params.get("time"));
-  const needs = parsePreferences(params.get("needs"));
-  const needsQuery = needs.length ? `&needs=${needs.join(",")}` : "";
-  const [stepIndex, setStepIndex] = useState(0);
-  const [progress, setProgress] = useState(12);
+  const routeId = (params.get("route") || "comfortable") as RouteMode;
+  const routeMeta = routeOptions.find((item) => item.id === routeId) ?? routeOptions[0];
+  const needs = useMemo(() => parsePreferences(params.get("needs")), [params]);
+  const trip = useMemo(() => parseTripContext(params), [params]);
+  const [liveRoute, setLiveRoute] = useState<LiveRoute | null>(null);
+  const [location, setLocation] = useState<LocationFix | null>(null);
+  const [gpsError, setGpsError] = useState("");
+  const [routeError, setRouteError] = useState("");
+  const [loadingRoute, setLoadingRoute] = useState(true);
+  const [rerouting, setRerouting] = useState(false);
+  const snappedToGps = useRef(false);
+
+  const calculate = useCallback(async (start: [number, number], reroute = false) => {
+    if (!trip.end) return;
+    reroute ? setRerouting(true) : setLoadingRoute(true);
+    setRouteError("");
+    try {
+      const result = await fetchWalkingRoute({ start, end: trip.end, mode: routeId, needs });
+      setLiveRoute(result);
+    } catch (error) {
+      setRouteError(error instanceof Error ? error.message : "تعذر حساب الطريق.");
+    } finally {
+      setLoadingRoute(false);
+      setRerouting(false);
+    }
+  }, [needs, routeId, trip.end]);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setProgress((value) => {
-        if (value >= 96) return value;
-        const next = Math.min(value + 7, 96);
-        const targetStep = Math.min(Math.floor((next / 100) * steps.length), steps.length - 1);
-        setStepIndex(targetStep);
-        return next;
-      });
-    }, 4200);
+    if (!trip.start || !trip.end) {
+      setLoadingRoute(false);
+      setRouteError("بيانات البداية أو الوجهة غير مكتملة.");
+      return;
+    }
+    calculate(trip.start);
+  }, [calculate, trip.end, trip.start]);
 
-    return () => window.clearInterval(interval);
+  const handleLocation = useCallback((fix: LocationFix) => {
+    setLocation(fix);
+    setGpsError("");
   }, []);
 
-  const step = steps[stepIndex];
-  const remaining = useMemo(() => Math.max(2, Math.round(route.duration * (1 - progress / 100))), [progress, route.duration]);
-  const alternative = routeOptions.find((item) => item.id === "comfortable") ?? routeOptions[0];
-  const canOfferAlternative = route.id !== alternative.id;
-  const alternativeDelta = alternative.duration - route.duration;
+  useEffect(() => {
+    if (!location || !liveRoute || !trip.start || snappedToGps.current) return;
+    const drift = haversineMeters([location.lat, location.lon], trip.start);
+    if (drift > Math.max(35, location.accuracy * 1.2)) {
+      snappedToGps.current = true;
+      calculate([location.lat, location.lon], true);
+    } else {
+      snappedToGps.current = true;
+    }
+  }, [calculate, liveRoute, location, trip.start]);
 
-  function switchRoute() {
-    setProgress(12);
-    setStepIndex(0);
-    router.push(`/navigate?route=${alternative.id}&time=${encodeURIComponent(selectedTime)}${needsQuery}`);
+  const progressState = useMemo(() => {
+    if (!location || !liveRoute) return null;
+    return routeProgress([location.lat, location.lon], liveRoute);
+  }, [liveRoute, location]);
+
+  const maneuver = useMemo(() => {
+    if (!liveRoute || !progressState) return null;
+    return activeManeuver(liveRoute, progressState.walkedMeters);
+  }, [liveRoute, progressState]);
+
+  const destinationDistance = useMemo(() => {
+    if (!location || !trip.end) return Number.POSITIVE_INFINITY;
+    return haversineMeters([location.lat, location.lon], trip.end);
+  }, [location, trip.end]);
+
+  const arrived = destinationDistance <= 35 && Boolean(location && location.accuracy <= 70);
+  const offRoute = Boolean(
+    progressState && location && location.accuracy <= 80 && progressState.offRouteMeters > Math.max(55, location.accuracy * 1.5),
+  );
+  const remainingSeconds = liveRoute && progressState && liveRoute.distanceMeters > 0
+    ? liveRoute.durationSeconds * (progressState.remainingMeters / liveRoute.distanceMeters)
+    : liveRoute?.durationSeconds || 0;
+
+  async function rerouteFromGps() {
+    if (!location || !trip.end) return;
+    await calculate([location.lat, location.lon], true);
   }
+
+  if (!trip.start || !trip.end) {
+    return (
+      <main className="content-shell content-shell--narrow">
+        <div className="page-title"><h1>لا توجد رحلة نشطة</h1><p>ابدأ من الصفحة الرئيسية وحدد نقطة البداية والوجهة أولًا.</p></div>
+        <Link href="/" className="primary-action">تخطيط رحلة</Link>
+      </main>
+    );
+  }
+
+  const routeGeometry = liveRoute ? { [routeId]: liveRoute.geometry } as Partial<Record<RouteMode, [number, number][]>> : {};
+  const instruction = arrived ? "وصلت إلى وجهتك" : maneuver?.instruction || (loadingRoute ? "جاري تجهيز الطريق" : "اتبع المسار الظاهر على الخريطة");
+  const instructionDistance = maneuver ? formatDistance(maneuver.remainingToManeuverMeters) : liveRoute ? formatDistance(liveRoute.distanceMeters) : "";
 
   return (
     <main className="navigation-shell">
-      <section className="navigation-map" aria-label="الملاحة الحية">
+      <section className="navigation-map" aria-label="الملاحة الحية باستخدام GPS">
         <div className="map-frame">
-          <MapView selected={route.id} showAll={false} />
-          <div className="map-context nav-map-context">
-            <strong>{route.name}</strong>
-            <span>إلى المسجد النبوي · راحة {route.timeComfort[selectedTime]}/100</span>
-          </div>
+          <MapView selected={routeId} showAll={false} routes={routeGeometry} start={trip.start} end={trip.end} trackUser onLocationChange={handleLocation} onLocationError={setGpsError} />
+          <div className="map-context nav-map-context"><strong>{routeMeta.name}</strong><span>{trip.toLabel} · {liveRoute ? `${formatDistance(liveRoute.distanceMeters)} · ${formatDuration(liveRoute.durationSeconds)}` : "جاري حساب المسار"}</span></div>
         </div>
       </section>
 
@@ -68,61 +128,26 @@ export function NavigationExperience() {
         <div className="navigation-sheet__inner">
           <div>
             <div className="nav-instruction">
-              <div className="nav-instruction__icon">
-                {progress > 90 ? <Flag size={28} /> : <ArrowUp size={29} />}
-              </div>
-              <div>
-                <h1>{progress > 90 ? "الوجهة أمامك" : step.title}</h1>
-                <p>{progress > 90 ? "بقيت خطوات قليلة للوصول." : `${step.distance} · ${step.note}`}</p>
-              </div>
+              <div className="nav-instruction__icon">{arrived ? <Flag size={28} /> : <ArrowUp size={29} />}</div>
+              <div><h1>{instruction}</h1><p>{arrived ? `أنت على بعد ${Math.round(destinationDistance)} م تقريبًا من النقطة المحددة.` : instructionDistance}</p></div>
             </div>
-            <div className="nav-progress" aria-label={`تقدم الرحلة ${progress}%`}>
-              <span style={{ width: `${progress}%` }} />
-            </div>
+            <div className="nav-progress" aria-label={`تقدم الرحلة ${progressState?.progress || 0}%`}><span style={{ width: `${progressState?.progress || 0}%` }} /></div>
           </div>
-
           <div>
             <div className="nav-status">
-              <div>
-                <span>المتبقي</span>
-                <strong>{remaining} د</strong>
-              </div>
-              <div>
-                <span>الظل</span>
-                <strong>{route.shade}%</strong>
-              </div>
-              <div>
-                <span>الراحة</span>
-                <strong>{route.timeComfort[selectedTime]}</strong>
-              </div>
+              <div><span>المتبقي</span><strong>{liveRoute ? formatDuration(remainingSeconds) : "—"}</strong></div>
+              <div><span>GPS</span><strong>{location ? `±${Math.round(location.accuracy)}م` : "بانتظار الإذن"}</strong></div>
+              <div><span>المسافة</span><strong>{progressState ? formatDistance(progressState.remainingMeters) : liveRoute ? formatDistance(liveRoute.distanceMeters) : "—"}</strong></div>
             </div>
-            {progress > 90 && (
-              <Link href={`/arrival?route=${route.id}`} className="primary-action" style={{ marginTop: 10 }}>
-                إنهاء الرحلة
-              </Link>
-            )}
+            {arrived && <Link href={`/arrival?route=${routeId}`} className="primary-action" style={{ marginTop: 10 }}>إنهاء الرحلة</Link>}
           </div>
         </div>
 
-        {progress > 44 && progress < 72 && (
-          <div className="nav-decision">
-            <CircleAlert size={18} />
-            <div className="nav-decision__copy">
-              <strong>كثافة مشاة أعلى بعد 300 متر</strong>
-              <span>
-                {canOfferAlternative
-                  ? `${alternative.name} أريح الآن${alternativeDelta > 0 ? ` ويضيف ${alternativeDelta} دقائق` : ""}.`
-                  : "المسار الحالي ما زال الأفضل من ناحية الراحة، لذلك لا نوصي بتغييره."}
-              </span>
-            </div>
-            {canOfferAlternative && (
-              <button type="button" className="nav-decision__action" onClick={switchRoute}>
-                <ArrowLeftRight size={15} />
-                التحويل للمسار الأريح
-              </button>
-            )}
-          </div>
-        )}
+        {!location && !gpsError && <div className="nav-decision is-info"><LocateFixed size={18} /><div className="nav-decision__copy"><strong>بانتظار GPS</strong><span>اسمح للمتصفح باستخدام موقعك. لن تتحرك الرحلة تلقائيًا أو بشكل وهمي.</span></div></div>}
+        {gpsError && <div className="nav-decision"><CircleAlert size={18} /><div className="nav-decision__copy"><strong>التتبع متوقف</strong><span>{gpsError}</span></div></div>}
+        {routeError && <div className="nav-decision"><CircleAlert size={18} /><div className="nav-decision__copy"><strong>تعذر حساب المسار</strong><span>{routeError}</span></div>{location && <button type="button" className="nav-decision__action" onClick={rerouteFromGps} disabled={rerouting}><RefreshCcw size={15} /> إعادة الحساب</button>}</div>}
+        {offRoute && !routeError && <div className="nav-decision"><RouteIcon size={18} /><div className="nav-decision__copy"><strong>أنت خارج المسار بنحو {Math.round(progressState?.offRouteMeters || 0)} م</strong><span>يمكن إعادة حساب طريق المشي من موقع GPS الحالي إلى الوجهة.</span></div><button type="button" className="nav-decision__action" onClick={rerouteFromGps} disabled={rerouting}><RefreshCcw size={15} />{rerouting ? "جاري إعادة الحساب…" : "إعادة التوجيه"}</button></div>}
+        {location && !offRoute && !gpsError && !routeError && !arrived && <div className="navigation-live-note"><span className="live-dot" /> التتبع حي من GPS · آخر تحديث {new Date(location.timestamp).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>}
       </section>
     </main>
   );
