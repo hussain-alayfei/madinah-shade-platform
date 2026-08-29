@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import "./animations.css";
+import "./polish.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = IBM_Plex_Sans_Arabic({
