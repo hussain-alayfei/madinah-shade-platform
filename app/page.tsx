@@ -4,17 +4,11 @@ import { TripPlanner } from "@/components/TripPlanner";
 export default function HomePage() {
   return (
     <main className="home-shell">
-      <section className="home-panel">
-        <TripPlanner />
-      </section>
-
+      <section className="home-panel"><TripPlanner /></section>
       <section className="home-map" aria-label="خريطة مسارات المشاة">
         <div className="map-frame">
-          <MapView selected="comfortable" showAll={false} />
-          <div className="map-context">
-            <strong>المدينة المنورة</strong>
-            <span>معاينة توضح تجربة تخطيط المسار في النسخة الأولية.</span>
-          </div>
+          <MapView showAll={false} />
+          <div className="map-context"><strong>خريطة حقيقية</strong><span>استخدم زر «موقعي» أو ابحث عن وجهة لبدء حساب مسار المشي.</span></div>
         </div>
       </section>
     </main>

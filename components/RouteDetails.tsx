@@ -1,106 +1,19 @@
 "use client";
-
 import Link from "next/link";
-import { Accessibility, Armchair, ArrowRight, Clock3, Droplets, Navigation, SunMedium, Toilet, UsersRound } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { bestDeparture, parseDepartureTime, parsePreferences, routeOptions } from "@/lib/data";
-import { MapView } from "./MapView";
-import styles from "./RouteDetails.module.css";
-
-export function RouteDetails() {
-  const params = useSearchParams();
-  const routeId = params.get("route") ?? "comfortable";
-  const route = routeOptions.find((item) => item.id === routeId) ?? routeOptions[0];
-  const selectedTime = parseDepartureTime(params.get("time"));
-  const needs = parsePreferences(params.get("needs"));
-  const bestTime = bestDeparture(route);
-  const needsQuery = needs.length ? `&needs=${needs.join(",")}` : "";
-
-  return (
-    <main className={styles.layout}>
-      <section className={styles.details}>
-        <div className={styles.back}>
-          <Link href={`/plan?time=${encodeURIComponent(selectedTime)}${needsQuery}`} className="text-action">
-            <ArrowRight size={16} />
-            العودة للمسارات
-          </Link>
-        </div>
-
-        <h1>{route.name}</h1>
-        <p className={styles.description}>{route.description}</p>
-
-        <div className={styles.summary}>
-          <div>
-            <span>المدة</span>
-            <strong>{route.duration} دقيقة</strong>
-          </div>
-          <div>
-            <span>المسافة</span>
-            <strong>{route.distance} م</strong>
-          </div>
-          <div>
-            <span>الراحة · {selectedTime}</span>
-            <strong>{route.timeComfort[selectedTime]}/100</strong>
-          </div>
-        </div>
-
-        <section className={styles.section}>
-          <h2>حالة المسار المتوقعة</h2>
-          <div className={styles.fact}>
-            <span><SunMedium size={16} /> تغطية الظل</span>
-            <strong>{route.shade}%</strong>
-          </div>
-          <div className={styles.fact}>
-            <span><UsersRound size={16} /> الازدحام</span>
-            <strong>{route.crowd}</strong>
-          </div>
-          <div className={styles.fact}>
-            <span><Accessibility size={16} /> الإتاحة</span>
-            <strong>{route.accessible ? "مناسب" : "محدود"}</strong>
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2>الخدمات على الطريق</h2>
-          <div className={styles.services}>
-            <div className={styles.service}><Droplets size={16} /> {route.waterStops} نقاط مياه</div>
-            <div className={styles.service}><Armchair size={16} /> {route.restStops} مواقع استراحة</div>
-            <div className={styles.service}><Toilet size={16} /> دورة مياه ضمن النطاق القريب</div>
-          </div>
-        </section>
-
-        {bestTime.time !== selectedTime && (
-          <div className="route-time-advice">
-            <Clock3 size={17} />
-            <div>
-              <strong>وقت أريح متاح</strong>
-              <span>عند {bestTime.time} ترتفع الراحة المتوقعة إلى {bestTime.score}/100.</span>
-            </div>
-          </div>
-        )}
-
-        <div className="notice" style={{ marginTop: 18 }}>
-          {needs.length ? `تمت مراعاة ${needs.length} من احتياجات الرحلة. ` : ""}
-          حالة الظل والازدحام تقديرية في هذه النسخة التجريبية، وقد تتغير أثناء الرحلة.
-        </div>
-
-        <div className={styles.actions}>
-          <Link href={`/navigate?route=${route.id}&time=${encodeURIComponent(selectedTime)}${needsQuery}`} className="primary-action">
-            <Navigation size={18} />
-            ابدأ الرحلة
-          </Link>
-        </div>
-      </section>
-
-      <section className={styles.map} aria-label="تفاصيل المسار على الخريطة">
-        <div className="map-frame">
-          <MapView selected={route.id} showAll={false} />
-          <div className="map-context">
-            <strong>معاينة المسار</strong>
-            <span>راجع الطريق والخدمات قبل الانطلاق.</span>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
+import { Accessibility,Armchair,ArrowRight,Clock3,Droplets,Navigation,Route as RouteIcon,SunMedium,Toilet,UsersRound } from "lucide-react";
+import { useSearchParams } from "next/navigation"; import { useEffect,useMemo,useState } from "react";
+import { bestDeparture,parseDepartureTime,parsePreferences,routeOptions } from "@/lib/data";
+import { buildTripQuery,fetchWalkingRoute,formatDistance,formatDuration,parseTripContext,type LiveRoute,type RouteMode } from "@/lib/maps";
+import { MapView } from "./MapView"; import styles from "./RouteDetails.module.css";
+export function RouteDetails(){const params=useSearchParams();const routeId=(params.get("route")||"comfortable") as RouteMode;const route=routeOptions.find(i=>i.id===routeId)??routeOptions[0];const selectedTime=parseDepartureTime(params.get("time"));const needs=useMemo(()=>parsePreferences(params.get("needs")),[params]);const trip=useMemo(()=>parseTripContext(params),[params]);const bestTime=bestDeparture(route);const [liveRoute,setLiveRoute]=useState<LiveRoute|null>(null);const [loading,setLoading]=useState(true);const [error,setError]=useState("");
+useEffect(()=>{if(!trip.start||!trip.end){setLoading(false);setError("بيانات الرحلة غير مكتملة.");return}let c=false;setLoading(true);setError("");fetchWalkingRoute({start:trip.start,end:trip.end,mode:routeId,needs}).then(r=>{if(!c)setLiveRoute(r)}).catch(e=>{if(!c)setError(e instanceof Error?e.message:"تعذر حساب المسار.")}).finally(()=>{if(!c)setLoading(false)});return()=>{c=true}},[needs,routeId,trip.end,trip.start]);
+const backQuery=buildTripQuery({trip,time:selectedTime,needs});const navQuery=buildTripQuery({trip,time:selectedTime,needs,route:route.id});const routes=liveRoute?{[route.id]:liveRoute.geometry} as Partial<Record<RouteMode,[number,number][]>>:{};
+if(!trip.start||!trip.end)return <main className="content-shell content-shell--narrow"><div className="page-title"><h1>بيانات الرحلة غير مكتملة</h1><p>ابدأ من الصفحة الرئيسية حتى نحصل على نقطة البداية والوجهة.</p></div><Link href="/" className="primary-action">تخطيط رحلة جديدة</Link></main>;
+return <main className={styles.layout}><section className={styles.details}><div className={styles.back}><Link href={`/plan?${backQuery}`} className="text-action"><ArrowRight size={16}/>العودة للمسارات</Link></div><h1>{route.name}</h1><p className={styles.description}>{trip.fromLabel} ← {trip.toLabel}</p>
+<div className={styles.summary}><div><span>المدة الفعلية</span><strong>{liveRoute?formatDuration(liveRoute.durationSeconds):loading?"…":"—"}</strong></div><div><span>المسافة الفعلية</span><strong>{liveRoute?formatDistance(liveRoute.distanceMeters):loading?"…":"—"}</strong></div><div><span>الراحة التقديرية · {selectedTime}</span><strong>{route.timeComfort[selectedTime]}/100*</strong></div></div>{error&&<div className="planner-status is-error">{error}</div>}{liveRoute&&<div className="live-routing-banner compact"><RouteIcon size={16}/><div><strong>المسار محسوب من شبكة طرق OpenStreetMap</strong><span>محرك التوجيه: Valhalla · {liveRoute.viaLabel?`يمر عبر ${liveRoute.viaLabel}`:"مسار مشاة مباشر"}</span></div></div>}
+<section className={styles.section}><h2>تعليمات المشي</h2>{loading?<p className="muted">جاري تجهيز تعليمات الطريق…</p>:liveRoute?.maneuvers.length?<ol className="live-steps">{liveRoute.maneuvers.slice(0,5).map((m,i)=><li key={`${m.instruction}-${i}`}><span>{i+1}</span><div><strong>{m.instruction}</strong><small>{formatDistance(m.distanceMeters)}</small></div></li>)}</ol>:<p className="muted">لا توجد تعليمات متاحة لهذا المسار حاليًا.</p>}</section>
+<section className={styles.section}><h2>مؤشرات المنتج التجريبية</h2><div className={styles.fact}><span><SunMedium size={16}/> تغطية الظل</span><strong>~{route.shade}%*</strong></div><div className={styles.fact}><span><UsersRound size={16}/> الازدحام</span><strong>{route.crowd}*</strong></div><div className={styles.fact}><span><Accessibility size={16}/> تفضيل الإتاحة</span><strong>{route.accessible?"مرتفع":"محدود"}</strong></div></section>
+<section className={styles.section}><h2>الخدمات التوضيحية</h2><div className={styles.services}><div className={styles.service}><Droplets size={16}/> {route.waterStops} نقاط مياه*</div><div className={styles.service}><Armchair size={16}/> {route.restStops} مواقع استراحة*</div><div className={styles.service}><Toilet size={16}/> دورة مياه قريبة*</div></div></section>
+{bestTime.time!==selectedTime&&<div className="route-time-advice"><Clock3 size={17}/><div><strong>تقدير وقت أريح</strong><span>عند {bestTime.time} يصبح تقدير الراحة {bestTime.score}/100. هذا ليس قياسًا حيًا حتى نوصل بيانات الظل والطقس.</span></div></div>}
+<div className="notice" style={{marginTop:18}}>* المؤشرات الحضرية مثل الظل والازدحام والخدمات ما زالت Demo. أما خط الطريق والمسافة والزمن فهي محسوبة من خدمة توجيه فعلية.</div><div className={styles.actions}><Link href={liveRoute?`/navigate?${navQuery}`:"#"} className={`primary-action ${!liveRoute?"is-disabled":""}`} aria-disabled={!liveRoute} onClick={e=>{if(!liveRoute)e.preventDefault()}}><Navigation size={18}/>{liveRoute?"ابدأ التتبع الحقيقي":loading?"جاري تجهيز المسار…":"المسار غير متاح"}</Link></div></section>
+<section className={styles.map}><div className="map-frame"><MapView selected={route.id} showAll={false} routes={routes} start={trip.start} end={trip.end}/><div className="map-context"><strong>{route.name}</strong><span>{liveRoute?`${formatDistance(liveRoute.distanceMeters)} · ${formatDuration(liveRoute.durationSeconds)}`:"جاري حساب الطريق…"}</span></div></div></section></main>}
