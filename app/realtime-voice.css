@@ -169,8 +169,7 @@
 }
 
 .realtime-voice-choice button span {
-  color: #6a756f;
-  font-size: 12px;
+  display: none;
 }
 
 .realtime-voice-choice button.is-selected {
