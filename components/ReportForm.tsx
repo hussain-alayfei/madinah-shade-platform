@@ -1,77 +1,14 @@
 "use client";
 
-import { Camera, CheckCircle2, MapPin, Send } from "lucide-react";
+import { Camera, CheckCircle2, LocateFixed, MapPin, Send } from "lucide-react";
 import { FormEvent, useState } from "react";
-
-export function ReportForm() {
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <div className="success-box" role="status">
-        <CheckCircle2 size={24} />
-        <h2>تم استلام البلاغ</h2>
-        <p>سيظهر للمجتمع للتحقق منه قبل اعتماده ضمن بيانات المسار.</p>
-      </div>
-    );
-  }
-
-  return (
-    <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-grid">
-        <div className="form-field">
-          <label htmlFor="category">نوع الملاحظة</label>
-          <select id="category" name="category" defaultValue="accessibility">
-            <option value="accessibility">الإتاحة</option>
-            <option value="shade">الظل والحرارة</option>
-            <option value="crowd">الازدحام</option>
-            <option value="sidewalk">الرصيف والعوائق</option>
-            <option value="services">المياه والخدمات</option>
-            <option value="other">أخرى</option>
-          </select>
-        </div>
-
-        <div className="form-field">
-          <label htmlFor="location">الموقع</label>
-          <div style={{ position: "relative" }}>
-            <MapPin size={18} style={{ position: "absolute", right: 12, top: 15, color: "#0f6b54" }} />
-            <input id="location" name="location" defaultValue="موقعي الحالي" style={{ paddingRight: 39 }} />
-          </div>
-        </div>
-
-        <div className="form-field form-field--full">
-          <label htmlFor="title">وصف مختصر</label>
-          <input id="title" name="title" placeholder="مثال: المنحدر غير صالح للاستخدام" required />
-        </div>
-
-        <div className="form-field form-field--full">
-          <label htmlFor="details">التفاصيل</label>
-          <textarea id="details" name="details" placeholder="اكتب ما لاحظته بشكل واضح ليسهل على الآخرين التحقق منه." required />
-        </div>
-
-        <div className="form-field form-field--full">
-          <label htmlFor="photo">صورة اختيارية</label>
-          <div className="planner-input">
-            <Camera size={18} />
-            <input id="photo" name="photo" type="file" accept="image/*" style={{ padding: 0 }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="form-actions">
-        <button type="submit" className="primary-action">
-          <Send size={18} />
-          إرسال البلاغ
-        </button>
-        <span className="muted" style={{ fontSize: 12 }}>
-          لا تنشر معلومات شخصية أو صورًا واضحة للأشخاص.
-        </span>
-      </div>
-    </form>
-  );
+import type { LatLng } from "@/lib/maps";
+const REPORTS_KEY="madinah-shade-reports-v1";
+const categoryLabels:Record<string,string>={accessibility:"الإتاحة",shade:"الظل والحرارة",crowd:"الازدحام",sidewalk:"الرصيف والعوائق",services:"المياه والخدمات",other:"أخرى"};
+type StoredReport={id:string;category:string;title:string;details:string;location:string;lat?:number;lon?:number;createdAt:string;confirmations:number;status:string;local:true};
+export function ReportForm(){const[submitted,setSubmitted]=useState(false);const[saved,setSaved]=useState(false);const[location,setLocation]=useState("موقعي الحالي");const[coordinates,setCoordinates]=useState<LatLng|null>(null);const[locating,setLocating]=useState(false);const[error,setError]=useState("");
+function locate(){setError("");if(!navigator.geolocation){setError("هذا المتصفح لا يدعم تحديد الموقع.");return;}setLocating(true);navigator.geolocation.getCurrentPosition((position)=>{setCoordinates({lat:position.coords.latitude,lon:position.coords.longitude});setLocation("موقعي الحالي");setLocating(false);},()=>{setError("تعذر تحديد الموقع. تأكد من منح إذن الموقع أو اكتب الموقع يدويًا.");setLocating(false);},{enableHighAccuracy:true,timeout:12000,maximumAge:30000});}
+function handleSubmit(event:FormEvent<HTMLFormElement>){event.preventDefault();setError("");const form=new FormData(event.currentTarget);const category=String(form.get("category")||"other");const title=String(form.get("title")||"").trim();const details=String(form.get("details")||"").trim();if(!title||!details||!location.trim()){setError("أكمل الموقع والوصف والتفاصيل قبل إرسال البلاغ.");return;}const report:StoredReport={id:`local-${Date.now()}`,category:categoryLabels[category]||categoryLabels.other,title,details,location:location.trim(),...(coordinates?coordinates:{}),createdAt:new Date().toISOString(),confirmations:0,status:"بانتظار التحقق",local:true};try{const existing=JSON.parse(window.localStorage.getItem(REPORTS_KEY)||"[]") as StoredReport[];window.localStorage.setItem(REPORTS_KEY,JSON.stringify([report,...existing].slice(0,50)));setSaved(true);}catch{setSaved(false);}setSubmitted(true);}
+if(submitted)return <div className="success-box" role="status"><CheckCircle2 size={24}/><h2>تم تسجيل البلاغ</h2><p>{saved?"حُفظ البلاغ على هذا الجهاز وسيظهر في صفحة المجتمع لديك.":"تمت معالجة النموذج، لكن المتصفح منع التخزين المحلي."}</p></div>;
+return <form className="form-card" onSubmit={handleSubmit}><div className="form-grid"><div className="form-field"><label htmlFor="category">نوع الملاحظة</label><select id="category" name="category" defaultValue="accessibility"><option value="accessibility">الإتاحة</option><option value="shade">الظل والحرارة</option><option value="crowd">الازدحام</option><option value="sidewalk">الرصيف والعوائق</option><option value="services">المياه والخدمات</option><option value="other">أخرى</option></select></div><div className="form-field"><div className="planner-field__label-row"><label htmlFor="location">الموقع</label><button type="button" className="field-inline-action" onClick={locate} disabled={locating}><LocateFixed size={14}/>{locating?"جاري التحديد…":"GPS"}</button></div><div style={{position:"relative"}}><MapPin size={18} style={{position:"absolute",right:12,top:15,color:"#0f6b54"}}/><input id="location" name="location" value={location} onChange={(event)=>{setLocation(event.target.value);if(event.target.value!=="موقعي الحالي")setCoordinates(null);}} style={{paddingRight:39}}/></div>{coordinates&&<small className="field-success">تم ربط البلاغ بإحداثيات الجهاز.</small>}</div><div className="form-field form-field--full"><label htmlFor="title">وصف مختصر</label><input id="title" name="title" placeholder="مثال: المنحدر غير صالح للاستخدام" required/></div><div className="form-field form-field--full"><label htmlFor="details">التفاصيل</label><textarea id="details" name="details" placeholder="اكتب ما لاحظته بشكل واضح ليسهل على الآخرين التحقق منه." required/></div><div className="form-field form-field--full"><label htmlFor="photo">صورة اختيارية</label><div className="planner-input"><Camera size={18}/><input id="photo" name="photo" type="file" accept="image/*" style={{padding:0}}/></div><small className="muted">الصورة لا تُرفع لسيرفر في هذه النسخة؛ اختيار الملف يعمل محليًا فقط.</small></div></div>{error&&<div className="logic-error" role="alert">{error}</div>}<div className="form-actions"><button type="submit" className="primary-action"><Send size={18}/>حفظ البلاغ</button><span className="muted" style={{fontSize:12}}>التخزين حاليًا على جهازك. الربط بين جميع المستخدمين يحتاج قاعدة بيانات تشغيلية.</span></div></form>;
 }

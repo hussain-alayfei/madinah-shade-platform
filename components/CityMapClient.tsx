@@ -1,43 +1,5 @@
 "use client";
-
 import "leaflet/dist/leaflet.css";
 import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
-
-const hotspots = [
-  { center: [24.4706, 39.6121] as [number, number], radius: 95, label: "تعرض حراري مرتفع", type: "حرارة", color: "#9b6b27" },
-  { center: [24.4693, 39.6146] as [number, number], radius: 80, label: "كثافة مشاة مرتفعة", type: "ازدحام", color: "#a54536" },
-  { center: [24.4682, 39.6118] as [number, number], radius: 65, label: "ملاحظة إتاحة متكررة", type: "إتاحة", color: "#8f6b3f" },
-  { center: [24.4715, 39.6151] as [number, number], radius: 60, label: "نقص خدمات على المسار", type: "خدمات", color: "#506a61" },
-];
-
-export function CityMapClient() {
-  return (
-    <MapContainer center={[24.4696, 39.6135]} zoom={16} scrollWheelZoom className="route-map">
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-
-      {hotspots.map((spot) => (
-        <Circle
-          key={spot.label}
-          center={spot.center}
-          radius={spot.radius}
-          pathOptions={{ color: spot.color, fillColor: spot.color, fillOpacity: 0.16, weight: 2 }}
-        >
-          <Popup>
-            <strong>{spot.type}</strong><br />{spot.label}
-          </Popup>
-        </Circle>
-      ))}
-
-      <CircleMarker
-        center={[24.46775, 39.61645]}
-        radius={7}
-        pathOptions={{ color: "#ffffff", fillColor: "#0f6b54", fillOpacity: 1, weight: 3 }}
-      >
-        <Popup>نقطة مرجعية</Popup>
-      </CircleMarker>
-    </MapContainer>
-  );
-}
+const hotspots=[{center:[24.4706,39.6121] as [number,number],radius:95,label:"تعرض حراري مرتفع",type:"الإجهاد الحراري",color:"#9b6b27"},{center:[24.4693,39.6146] as [number,number],radius:80,label:"كثافة مشاة مرتفعة",type:"الازدحام",color:"#a54536"},{center:[24.4682,39.6118] as [number,number],radius:65,label:"ملاحظة إتاحة متكررة",type:"الإتاحة",color:"#8f6b3f"},{center:[24.4715,39.6151] as [number,number],radius:60,label:"نقص خدمات على المسار",type:"الخدمات",color:"#506a61"}];
+export function CityMapClient({activeLayer="نظرة عامة"}:{activeLayer?:string}){const visible=activeLayer==="نظرة عامة"||activeLayer==="الخريطة"||activeLayer==="البلاغات"||activeLayer==="التدخلات"?hotspots:hotspots.filter((spot)=>spot.type===activeLayer);return <MapContainer center={[24.4696,39.6135]} zoom={16} scrollWheelZoom className="route-map"><TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>{visible.map((spot)=><Circle key={spot.label} center={spot.center} radius={spot.radius} pathOptions={{color:spot.color,fillColor:spot.color,fillOpacity:.16,weight:2}}><Popup><strong>{spot.type}</strong><br/>{spot.label}<br/><small>طبقة لوحة المدينة تجريبية وليست بثًا حيًا.</small></Popup></Circle>)}<CircleMarker center={[24.46775,39.61645]} radius={7} pathOptions={{color:"#ffffff",fillColor:"#0f6b54",fillOpacity:1,weight:3}}><Popup>نقطة مرجعية للنطاق التجريبي</Popup></CircleMarker></MapContainer>;}

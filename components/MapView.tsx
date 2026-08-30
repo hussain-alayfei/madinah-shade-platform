@@ -1,12 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { LatLng, LiveRoute, UserPosition } from "@/lib/maps";
 
-const MapClient = dynamic(() => import("./MapClient").then((mod) => mod.MapClient), {
-  ssr: false,
-  loading: () => <div className="map-loading">جاري تحميل الخريطة…</div>,
-});
+const MapClient = dynamic(() => import("./MapClient").then((mod) => mod.MapClient), { ssr: false, loading: () => <div className="map-loading">جاري تحميل الخريطة…</div> });
 
-export function MapView({ selected = "comfortable", showAll = true }: { selected?: string; showAll?: boolean }) {
-  return <MapClient selected={selected} showAll={showAll} />;
-}
+export type MapViewProps = { routes?: LiveRoute[]; selected?: string; showAll?: boolean; origin?: LatLng; destination?: LatLng; userPosition?: UserPosition; followUser?: boolean };
+export function MapView(props: MapViewProps) { return <MapClient {...props} />; }
