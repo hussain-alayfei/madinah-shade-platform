@@ -1,48 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SAUDI_VOICE_INSTRUCTIONS = `
-أنت المساعد الصوتي لتطبيق "ظل المدينة" في المدينة المنورة.
-المستخدمون الأساسيون يشملون كبار السن والمكفوفين وضعاف البصر، لذلك تكلم بوضوح وبهدوء وبجمل قصيرة.
-استخدم لهجة سعودية طبيعية ومحترمة وبسيطة، مثل: أبشر، حياك، تم، وين تبي تروح، لكن بدون مبالغة أو تصنع.
-لا تستخدم لهجات عربية أخرى إذا كان بإمكانك التعبير باللهجة السعودية.
+const VOICE_INSTRUCTIONS = `
+أنت المساعد الصوتي لتطبيق "ظل المدينة".
+تكلم بلهجة سعودية طبيعية ومحترمة وبسيطة، بدون مبالغة أو تصنع.
+ابدأ بالمعلومة الأهم، واجعل الرد غالبًا من جملة إلى ثلاث جمل قصيرة.
+لا تشرح للمستخدم أي تفاصيل تقنية أو أسماء أنظمة أو خدمات أو نماذج أو مفاتيح أو مزودين.
+لا تقل إنك ذكاء اصطناعي ولا تشرح كيف تعمل إلا إذا سأل المستخدم مباشرة.
+لا تستخدم رموز Markdown في الرد الصوتي. إذا احتجت ترتيب نقاط، استخدم عبارات قصيرة مثل: أولًا، ثانيًا، ثالثًا.
 إذا لم تفهم اسم مكان، اسأل سؤال توضيحي واحد فقط ولا تخمن.
-إذا كان المستخدم يطلب مسار مشي، ذكّره أن ظل المدينة يوازن بين الظل والحرارة والازدحام والإتاحة والخدمات، ولا تدّع أن بيانات الحرارة أو الازدحام حية إذا لم تكن موصولة.
-لا تعطِ تعليمات ملاحية خطرة أو تدّعي معرفة موقع المستخدم ما لم يذكره أو يشاركه التطبيق.
-اجعل الرد الصوتي غالبًا من جملة إلى ثلاث جمل، وابدأ بالمعلومة الأهم.
+إذا طلب المستخدم فتح المشوار أو البلاغ أو المجتمع، استخدم أداة open_section.
+إذا طلب طريقًا أو قال ودني/وصلني/أبي أروح لمكان، استخدم أداة plan_trip بدل الاكتفاء بشرح الطريق بالكلام.
+إذا ذكر أنه كبير سن أو معه كبير سن، فعّل senior في plan_trip.
+إذا ذكر كرسيًا متحركًا أو صعوبة حركة، فعّل wheelchair.
+إذا طلب استراحات أكثر أو تقليل الزحمة، مرر ذلك للأداة.
+لا تعطِ تعليمات ملاحية خطرة ولا تدّع معرفة موقع المستخدم قبل أن يشاركه التطبيق.
 `;
+
+const tools = [
+  {
+    type: "function",
+    name: "open_section",
+    description: "افتح قسمًا داخل التطبيق عندما يطلب المستخدم ذلك صراحة.",
+    parameters: {
+      type: "object",
+      properties: {
+        section: {
+          type: "string",
+          enum: ["trip", "report", "community"],
+        },
+      },
+      required: ["section"],
+      additionalProperties: false,
+    },
+  },
+  {
+    type: "function",
+    name: "plan_trip",
+    description: "جهز مشوار مشي من موقع المستخدم الحالي إلى وجهة يذكرها المستخدم.",
+    parameters: {
+      type: "object",
+      properties: {
+        destination: { type: "string", description: "اسم الوجهة كما قالها المستخدم." },
+        senior: { type: "boolean", description: "صحيح إذا كان المستخدم أو مرافقه كبير سن." },
+        wheelchair: { type: "boolean", description: "صحيح إذا احتاج المستخدم مسارًا مناسبًا للكرسي المتحرك." },
+        moreRest: { type: "boolean", description: "صحيح إذا طلب المستخدم استراحات أكثر." },
+        avoidCrowds: { type: "boolean", description: "صحيح إذا طلب المستخدم تقليل الزحمة." },
+      },
+      required: ["destination", "senior", "wheelchair", "moreRest", "avoidCrowds"],
+      additionalProperties: false,
+    },
+  },
+] as const;
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { code: "VOICE_API_NOT_CONFIGURED", error: "المحادثة الحية جاهزة وتحتاج فقط مفتاح الـAPI على السيرفر." },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "المساعد الصوتي غير متاح الآن." }, { status: 503 });
   }
 
   const contentType = request.headers.get("content-type") || "";
   if (!contentType.includes("application/sdp")) {
-    return NextResponse.json({ error: "نوع طلب الصوت غير صحيح." }, { status: 415 });
+    return NextResponse.json({ error: "تعذر بدء المحادثة." }, { status: 415 });
   }
 
   const sdp = await request.text();
   if (!sdp || sdp.length > 200_000) {
-    return NextResponse.json({ error: "بيانات الاتصال الصوتي غير صالحة." }, { status: 400 });
+    return NextResponse.json({ error: "تعذر بدء المحادثة." }, { status: 400 });
   }
 
   const session = {
     type: "realtime",
     model: "gpt-realtime-2.1",
-    instructions: SAUDI_VOICE_INSTRUCTIONS,
-    reasoning: { effort: "low" },
+    instructions: VOICE_INSTRUCTIONS,
+    max_output_tokens: 220,
+    output_modalities: ["audio"],
+    tool_choice: "auto",
+    tools,
     audio: {
-      output: { voice: "marin" },
+      input: {
+        noise_reduction: { type: "near_field" },
+        transcription: {
+          model: "gpt-4o-mini-transcribe",
+          language: "ar",
+          prompt: "لهجة سعودية وأسماء أماكن في المدينة المنورة مثل المسجد النبوي وقباء والقبلتين وأحد.",
+        },
+        turn_detection: {
+          type: "semantic_vad",
+          eagerness: "medium",
+          create_response: true,
+          interrupt_response: true,
+        },
+      },
+      output: {
+        voice: "marin",
+      },
     },
   };
 
   const form = new FormData();
-  form.set("sdp", sdp);
-  form.set("session", JSON.stringify(session));
+  form.set("sdp", new Blob([sdp], { type: "application/sdp" }));
+  form.set("session", new Blob([JSON.stringify(session)], { type: "application/json" }));
 
   try {
     const response = await fetch("https://api.openai.com/v1/realtime/calls", {
@@ -55,11 +112,8 @@ export async function POST(request: NextRequest) {
 
     const body = await response.text();
     if (!response.ok) {
-      console.error("Realtime voice session failed", response.status, body.slice(0, 500));
-      return NextResponse.json(
-        { error: "تعذر بدء المحادثة الصوتية الحية الآن." },
-        { status: response.status >= 500 ? 502 : 400 },
-      );
+      console.error("Voice session failed", response.status, body.slice(0, 500));
+      return NextResponse.json({ error: "تعذر بدء المحادثة الآن." }, { status: 502 });
     }
 
     return new NextResponse(body, {
@@ -70,7 +124,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Realtime voice bridge error", error);
-    return NextResponse.json({ error: "تعذر الاتصال بخدمة الصوت الآن." }, { status: 502 });
+    console.error("Voice connection error", error);
+    return NextResponse.json({ error: "تعذر بدء المحادثة الآن." }, { status: 502 });
   }
 }
