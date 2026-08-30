@@ -12,6 +12,7 @@ import "./map-first.css";
 import "./saudi-polish.css";
 import "./premium-rtl.css";
 import "./status-messages.css";
+import "./navigation-ux.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = Almarai({

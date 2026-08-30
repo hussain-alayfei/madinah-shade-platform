@@ -1,5 +1,5 @@
 import { Accessibility, Footprints, Navigation2, Route, Timer } from "lucide-react";
-import { formatDistance, type LiveRoute } from "@/lib/maps";
+import { formatDistance, formatDuration, type LiveRoute } from "@/lib/maps";
 
 export function RouteCard({
   route,
@@ -33,14 +33,14 @@ export function RouteCard({
       </div>
 
       <div className="route-card__summary">
-        <strong>{route.durationMinutes} دقيقة</strong>
+        <strong>{formatDuration(route.durationMinutes)}</strong>
         <span>{formatDistance(route.distanceMeters)}</span>
       </div>
 
       <dl className="route-facts route-facts--live">
         <div><dt><Route size={17} /> الطريق</dt><dd>مختلف</dd></div>
         <div><dt><Navigation2 size={17} /> التوجيهات</dt><dd>{route.maneuvers.length}</dd></div>
-        <div><dt><Timer size={17} /> الزمن</dt><dd>{route.durationMinutes} د</dd></div>
+        <div><dt><Timer size={17} /> الزمن</dt><dd>{formatDuration(route.durationMinutes)}</dd></div>
         <div><dt><Footprints size={17} /> النمط</dt><dd>مشي</dd></div>
         <div><dt><Accessibility size={17} /> الإتاحة</dt><dd>{route.wheelchairAware ? "مراعاة إضافية" : "قياسية"}</dd></div>
       </dl>
