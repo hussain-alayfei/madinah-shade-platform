@@ -75,7 +75,7 @@ export function RoutePlannerView() {
           <span>{trip.originLabel}</span>
           <strong>{trip.destinationLabel}</strong>
         </div>
-        <Link href="/" className="route-map-edit">تعديل</Link>
+        <Link href="/" className="route-map-edit">غيّر</Link>
       </div>
 
       <section className="route-picker-sheet" aria-label="اختيار المسار">
@@ -83,13 +83,13 @@ export function RoutePlannerView() {
 
         <header className="route-sheet-header">
           <div>
-            <h1>اختر مسارك</h1>
+            <h1>وش المسار اللي يناسبك؟</h1>
             <p>
               {loading
-                ? "جاري تجهيز الخيارات…"
+                ? "نجهز لك الخيارات…"
                 : routes.length > 1
-                  ? `${routes.length} مسارات مختلفة متاحة`
-                  : "المسار المتاح بين النقطتين"}
+                  ? `${routes.length} مسارات مختلفة`
+                  : "هذا المسار المتاح بين النقطتين"}
             </p>
           </div>
           {selectedRoute && (
@@ -100,13 +100,13 @@ export function RoutePlannerView() {
           )}
         </header>
 
-        {loading && <div className="route-loading route-loading--sheet">جاري تجهيز طرق المشي…</div>}
+        {loading && <div className="route-loading route-loading--sheet">نرتب لك طرق المشي…</div>}
 
         {error && (
           <div className="logic-error route-sheet-error" role="alert">
             <span>{error}</span>
             <button type="button" className="secondary-action" onClick={() => void loadRoutes()}>
-              <RefreshCw size={16} /> إعادة المحاولة
+              <RefreshCw size={16} /> جرّب مرة ثانية
             </button>
           </div>
         )}
@@ -148,7 +148,7 @@ export function RoutePlannerView() {
               التفاصيل
             </Link>
             <Link href={`/navigate?${tripQuery}&route=${selectedRoute.id}`} className="route-start-button">
-              <Navigation size={18} /> ابدأ
+              <Navigation size={18} /> ابدأ المشي
             </Link>
           </div>
         )}
