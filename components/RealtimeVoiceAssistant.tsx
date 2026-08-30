@@ -1,8 +1,8 @@
 "use client";
 
-import { Keyboard, MessageSquareText, Mic, MicOff, PhoneOff, Send, Volume2, X } from "lucide-react";
+import { Keyboard, Mic, MicOff, PhoneOff, Send, Volume2, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 type TranscriptMessage = {
   id: number;
@@ -32,6 +32,10 @@ type PlanTripArgs = {
   moreRest?: boolean;
   avoidCrowds?: boolean;
 };
+
+type VoiceProfile = "male" | "female";
+
+const VOICE_PREF_KEY = "madinah-shade-realtime-voice-v1";
 
 const sectionRoutes: Record<string, string> = {
   trip: "/",
@@ -71,6 +75,7 @@ export function RealtimeVoiceAssistant() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const nextId = useRef(0);
   const partialAssistantRef = useRef("");
+  const partialUserRef = useRef("");
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   const [active, setActive] = useState(false);
@@ -79,13 +84,10 @@ export function RealtimeVoiceAssistant() {
   const [status, setStatus] = useState("جاهز");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
-  const [showTranscript, setShowTranscript] = useState(false);
+  const [partialUser, setPartialUser] = useState("");
+  const [partialAssistant, setPartialAssistant] = useState("");
   const [showKeyboard, setShowKeyboard] = useState(false);
-
-  const latestAssistant = useMemo(
-    () => [...messages].reverse().find((message) => message.role === "assistant"),
-    [messages],
-  );
+  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>("female");
 
   function addMessage(role: TranscriptMessage["role"], text: string) {
     const clean = text.trim();
@@ -110,16 +112,37 @@ export function RealtimeVoiceAssistant() {
     }
 
     partialAssistantRef.current = "";
+    partialUserRef.current = "";
+    setPartialAssistant("");
+    setPartialUser("");
     setActive(false);
     setConnecting(false);
     setMuted(false);
   }
 
-  useEffect(() => cleanup, []);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(VOICE_PREF_KEY);
+      if (saved === "male" || saved === "female") setVoiceProfile(saved);
+    } catch {
+      // The default voice remains available when local storage is blocked.
+    }
+
+    return () => cleanup();
+  }, []);
 
   useEffect(() => {
-    if (showTranscript) transcriptEndRef.current?.scrollIntoView({ block: "nearest" });
-  }, [messages, showTranscript]);
+    transcriptEndRef.current?.scrollIntoView({ block: "nearest" });
+  }, [messages, partialUser, partialAssistant]);
+
+  function chooseVoice(profile: VoiceProfile) {
+    setVoiceProfile(profile);
+    try {
+      window.localStorage.setItem(VOICE_PREF_KEY, profile);
+    } catch {
+      // The choice still applies to the current session.
+    }
+  }
 
   function sendToolResult(callId: string, output: Record<string, unknown>) {
     const channel = channelRef.current;
@@ -226,6 +249,8 @@ export function RealtimeVoiceAssistant() {
       const event = JSON.parse(raw) as RealtimeEvent;
 
       if (event.type === "input_audio_buffer.speech_started") {
+        partialUserRef.current = "";
+        setPartialUser("");
         setStatus("أسمعك…");
         return;
       }
@@ -235,8 +260,30 @@ export function RealtimeVoiceAssistant() {
         return;
       }
 
+      if (event.type === "conversation.item.input_audio_transcription.delta" && event.delta) {
+        partialUserRef.current += event.delta;
+        setPartialUser(partialUserRef.current);
+        return;
+      }
+
+      if (event.type === "conversation.item.input_audio_transcription.completed") {
+        const text = event.transcript || partialUserRef.current;
+        partialUserRef.current = "";
+        setPartialUser("");
+        if (text) addMessage("user", text);
+        return;
+      }
+
+      if (event.type === "conversation.item.input_audio_transcription.failed") {
+        partialUserRef.current = "";
+        setPartialUser("");
+        setStatus("ما وضح الكلام، جرّب مرة ثانية.");
+        return;
+      }
+
       if (event.type === "response.output_audio_transcript.delta" && event.delta) {
         partialAssistantRef.current += event.delta;
+        setPartialAssistant(partialAssistantRef.current);
         setStatus("أرد عليك…");
         return;
       }
@@ -244,13 +291,9 @@ export function RealtimeVoiceAssistant() {
       if (event.type === "response.output_audio_transcript.done") {
         const text = event.transcript || partialAssistantRef.current;
         partialAssistantRef.current = "";
+        setPartialAssistant("");
         if (text) addMessage("assistant", text);
         setStatus("جاهز");
-        return;
-      }
-
-      if (event.type === "conversation.item.input_audio_transcription.completed" && event.transcript) {
-        addMessage("user", event.transcript);
         return;
       }
 
@@ -271,6 +314,11 @@ export function RealtimeVoiceAssistant() {
     if (active || connecting) return;
     setConnecting(true);
     setStatus("أشغل الميكروفون…");
+    setMessages([]);
+    setPartialUser("");
+    setPartialAssistant("");
+    partialUserRef.current = "";
+    partialAssistantRef.current = "";
 
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -318,7 +366,7 @@ export function RealtimeVoiceAssistant() {
       await peer.setLocalDescription(offer);
       if (!offer.sdp) throw new Error("connection-failed");
 
-      const response = await fetch("/api/voice-realtime", {
+      const response = await fetch(`/api/voice-realtime?voice=${voiceProfile}`, {
         method: "POST",
         headers: { "Content-Type": "application/sdp" },
         body: offer.sdp,
@@ -375,6 +423,8 @@ export function RealtimeVoiceAssistant() {
 
   if (pathname.startsWith("/city")) return null;
 
+  const hasTranscript = messages.length > 0 || Boolean(partialUser) || Boolean(partialAssistant);
+
   return (
     <>
       <button
@@ -398,7 +448,7 @@ export function RealtimeVoiceAssistant() {
           <header className="realtime-voice-header">
             <h2 id="realtime-voice-title">المساعد الصوتي</h2>
             <p id="realtime-voice-description" className="realtime-sr-only">
-              تقدر تتكلم أو تستخدم الكتابة، وتقدر توقف المحادثة في أي وقت.
+              تقدر تتكلم وتشوف كلامك مكتوب، أو تستخدم الكتابة، وتقدر توقف المحادثة في أي وقت.
             </p>
             <button type="button" className="realtime-voice-close" onClick={closeDialog} aria-label="إغلاق">
               <X size={24} aria-hidden="true" />
@@ -410,7 +460,30 @@ export function RealtimeVoiceAssistant() {
               <div className="realtime-voice-welcome">
                 <div className="realtime-voice-mark" aria-hidden="true"><Volume2 size={32} /></div>
                 <h3>كيف أقدر أساعدك؟</h3>
-                <p>اضغط الزر وتكلم.</p>
+                <p>اختر الصوت، وبعدها تكلم.</p>
+
+                <div className="realtime-voice-choice" role="radiogroup" aria-label="اختيار الصوت">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={voiceProfile === "male"}
+                    className={voiceProfile === "male" ? "is-selected" : ""}
+                    onClick={() => chooseVoice("male")}
+                  >
+                    <strong>صوت رجالي</strong>
+                    <span>هادئ وواضح</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={voiceProfile === "female"}
+                    className={voiceProfile === "female" ? "is-selected" : ""}
+                    onClick={() => chooseVoice("female")}
+                  >
+                    <strong>صوت نسائي</strong>
+                    <span>هادئ وواضح</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className={`realtime-voice-live-state ${active ? "is-active" : ""}`} aria-hidden="true">
@@ -422,9 +495,38 @@ export function RealtimeVoiceAssistant() {
               {status}
             </div>
 
-            {latestAssistant && (
-              <section className="realtime-voice-latest" aria-label="آخر رد" aria-live="polite">
-                <p>{latestAssistant.text}</p>
+            {(active || hasTranscript) && (
+              <section
+                className="realtime-voice-transcript realtime-voice-transcript--live"
+                aria-label="نص المحادثة"
+                aria-live="polite"
+                aria-relevant="additions text"
+              >
+                {!hasTranscript && active && (
+                  <p className="realtime-voice-empty">كلامك بيظهر هنا.</p>
+                )}
+
+                {messages.slice(-6).map((message) => (
+                  <div key={message.id} className={`realtime-message realtime-message--${message.role}`}>
+                    <strong>{message.role === "assistant" ? "المساعد" : "أنت"}</strong>
+                    <p>{message.text}</p>
+                  </div>
+                ))}
+
+                {partialUser && (
+                  <div className="realtime-message realtime-message--user is-live">
+                    <strong>أنت</strong>
+                    <p>{partialUser}<span className="realtime-live-caret" aria-hidden="true" /></p>
+                  </div>
+                )}
+
+                {partialAssistant && (
+                  <div className="realtime-message realtime-message--assistant is-live">
+                    <strong>المساعد</strong>
+                    <p>{partialAssistant}<span className="realtime-live-caret" aria-hidden="true" /></p>
+                  </div>
+                )}
+                <div ref={transcriptEndRef} />
               </section>
             )}
 
@@ -452,40 +554,16 @@ export function RealtimeVoiceAssistant() {
               </div>
             )}
 
-            <div className="realtime-voice-secondary">
-              <button
-                type="button"
-                onClick={() => setShowTranscript((value) => !value)}
-                aria-expanded={showTranscript}
-              >
-                <MessageSquareText size={19} aria-hidden="true" />
-                <span>{showTranscript ? "إخفاء النص" : "عرض النص"}</span>
-              </button>
+            <div className="realtime-voice-secondary realtime-voice-secondary--single">
               <button
                 type="button"
                 onClick={() => setShowKeyboard((value) => !value)}
                 aria-expanded={showKeyboard}
               >
                 <Keyboard size={19} aria-hidden="true" />
-                <span>{showKeyboard ? "إخفاء الكتابة" : "اكتب"}</span>
+                <span>{showKeyboard ? "إخفاء الكتابة" : "اكتب بدل الصوت"}</span>
               </button>
             </div>
-
-            {showTranscript && (
-              <section className="realtime-voice-transcript" aria-label="نص المحادثة">
-                {messages.length ? (
-                  messages.map((message) => (
-                    <div key={message.id} className="realtime-message">
-                      <strong>{message.role === "assistant" ? "المساعد" : "أنت"}</strong>
-                      <p>{message.text}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="realtime-voice-empty">ما فيه محادثة للحين.</p>
-                )}
-                <div ref={transcriptEndRef} />
-              </section>
-            )}
 
             {showKeyboard && (
               <form className="realtime-voice-form" onSubmit={sendText}>
