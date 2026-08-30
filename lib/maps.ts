@@ -43,6 +43,8 @@ export type LiveTrip = {
   originMode?: TripOriginMode;
 };
 
+export type UserFacingError = Error & { code?: string };
+
 export const MADINAH_CENTER: LatLng = { lat: 24.4672, lon: 39.6112 };
 export const MADINAH_SERVICE_RADIUS_METERS = 35_000;
 
@@ -57,6 +59,45 @@ export const madinahSuggestedPlaces = [
 type SearchParamsLike = {
   get(name: string): string | null;
 };
+
+function isSafeArabicMessage(value?: string) {
+  return Boolean(value && /[\u0600-\u06FF]/.test(value) && !/[A-Za-z]{4,}/.test(value));
+}
+
+function routingMessage(payload: { error?: string; code?: string } | null, status: number) {
+  if (payload?.code === "OUTSIDE_SERVICE_AREA") {
+    return {
+      code: payload.code,
+      message: "الرحلة خارج نطاق الخدمة الحالي. اختر نقطة بداية ووجهة داخل المدينة المنورة.",
+    };
+  }
+
+  if (payload?.code === "ROUTING_UNAVAILABLE" || status >= 500) {
+    return {
+      code: payload?.code || "ROUTING_UNAVAILABLE",
+      message: "ما قدرنا نلقى مسار مشي مناسب بين هالنقطتين الآن. حرّك البداية أو الوجهة شوي وجرب مرة ثانية.",
+    };
+  }
+
+  if (status === 404) {
+    return {
+      code: payload?.code || "NO_ROUTE",
+      message: "ما لقينا طريق مشي مناسب بين النقطتين. جرّب نقطة قريبة أو مدخل مختلف.",
+    };
+  }
+
+  if (isSafeArabicMessage(payload?.error)) {
+    return {
+      code: payload?.code,
+      message: payload!.error!,
+    };
+  }
+
+  return {
+    code: payload?.code || "ROUTE_ERROR",
+    message: "تعذر تجهيز المسار الآن. تحقق من نقطة البداية والوجهة ثم جرّب مرة ثانية.",
+  };
+}
 
 export function parseLiveTrip(params: SearchParamsLike): LiveTrip | null {
   const fromLat = Number(params.get("fromLat"));
@@ -120,8 +161,9 @@ export async function fetchLiveRoutes(trip: Pick<LiveTrip, "origin" | "destinati
     | null;
 
   if (!response.ok || !payload?.routes?.length) {
-    const error = new Error(payload?.error || "تعذر حساب مسار المشي الآن.") as Error & { code?: string };
-    error.code = payload?.code;
+    const userMessage = routingMessage(payload, response.status);
+    const error = new Error(userMessage.message) as UserFacingError;
+    error.code = userMessage.code;
     throw error;
   }
 
