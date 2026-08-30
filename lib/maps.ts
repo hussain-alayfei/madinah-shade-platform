@@ -149,25 +149,36 @@ export function tripToSearchParams(trip: LiveTrip) {
   return params;
 }
 
-export async function fetchLiveRoutes(trip: Pick<LiveTrip, "origin" | "destination" | "needs">) {
-  const response = await fetch("/api/route-resilient", {
+async function requestRouteEndpoint(endpoint: string, trip: Pick<LiveTrip, "origin" | "destination" | "needs">) {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(trip),
   });
-
   const payload = (await response.json().catch(() => null)) as
     | { routes?: LiveRoute[]; error?: string; code?: string }
     | null;
+  return { response, payload };
+}
 
-  if (!response.ok || !payload?.routes?.length) {
-    const userMessage = routingMessage(payload, response.status);
+export async function fetchLiveRoutes(trip: Pick<LiveTrip, "origin" | "destination" | "needs">) {
+  const primary = await requestRouteEndpoint("/api/route", trip);
+  if (primary.response.ok && primary.payload?.routes?.length) return primary.payload.routes;
+
+  if (primary.payload?.code === "OUTSIDE_SERVICE_AREA" || primary.response.status < 500) {
+    const userMessage = routingMessage(primary.payload, primary.response.status);
     const error = new Error(userMessage.message) as UserFacingError;
     error.code = userMessage.code;
     throw error;
   }
 
-  return payload.routes;
+  const fallback = await requestRouteEndpoint("/api/route-osrm", trip);
+  if (fallback.response.ok && fallback.payload?.routes?.length) return fallback.payload.routes;
+
+  const userMessage = routingMessage(fallback.payload || primary.payload, fallback.response.status);
+  const error = new Error(userMessage.message) as UserFacingError;
+  error.code = userMessage.code;
+  throw error;
 }
 
 export function haversineMeters(a: LatLng, b: LatLng) {
