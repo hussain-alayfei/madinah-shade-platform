@@ -183,6 +183,11 @@ function arabicInstruction(maneuver: ServiceManeuver) {
   }
 }
 
+function continuingInstruction(maneuver: ServiceManeuver) {
+  const street = maneuver.street_names?.[0];
+  return street ? `استمر نحو ${street}` : "استمر على المسار";
+}
+
 function comfortScore(id: LiveRoute["id"], distanceMeters: number, needs: PreferenceId[]) {
   const base = id === "comfortable" ? 90 : id === "balanced" ? 82 : 74;
   const distancePenalty = Math.min(10, Math.max(0, (distanceMeters - 1200) / 350));
@@ -265,8 +270,9 @@ function combineLegs(legs: ServiceLeg[]) {
     (leg.maneuvers || []).forEach((maneuver) => {
       const isIntermediateArrival = legIndex < legs.length - 1 && [4, 5, 6].includes(maneuver.type || -1);
       if (isIntermediateArrival) return;
+      const isRestartAtVia = legIndex > 0 && [1, 2, 3].includes(maneuver.type || -1);
       maneuvers.push({
-        instruction: arabicInstruction(maneuver),
+        instruction: isRestartAtVia ? continuingInstruction(maneuver) : arabicInstruction(maneuver),
         distanceMeters: Math.round((maneuver.length || 0) * 1000),
         timeSeconds: Math.round(maneuver.time || 0),
         beginShapeIndex: baseIndex + (maneuver.begin_shape_index || 0),
