@@ -97,9 +97,11 @@ export async function POST(request: NextRequest) {
     },
   };
 
+  // Realtime's unified WebRTC endpoint expects regular multipart text fields.
+  // Sending Blob/file parts can be parsed as attachments instead of the required fields.
   const form = new FormData();
-  form.set("sdp", new Blob([sdp], { type: "application/sdp" }));
-  form.set("session", new Blob([JSON.stringify(session)], { type: "application/json" }));
+  form.set("sdp", sdp);
+  form.set("session", JSON.stringify(session));
 
   try {
     const response = await fetch("https://api.openai.com/v1/realtime/calls", {
