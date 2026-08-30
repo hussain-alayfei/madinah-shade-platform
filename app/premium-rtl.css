@@ -1,0 +1,371 @@
+/* Final product polish: restrained, RTL-first, and intentionally non-template-like. */
+
+/* ---------- Brand ---------- */
+.brand-mark {
+  gap: 9px;
+}
+
+.brand-mark__icon {
+  width: 34px;
+  height: 34px;
+}
+
+.brand-mark__text {
+  display: block;
+  line-height: 1;
+}
+
+.brand-mark__text strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Community: guidance is copy, not a banner ---------- */
+.community-topline {
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.community-guidance {
+  max-width: 560px !important;
+  margin: 12px 0 0 !important;
+  padding-right: 11px;
+  border-right: 2px solid #c8aa78;
+  color: #6f746f !important;
+  font-size: 12px !important;
+  line-height: 1.75;
+}
+
+.community-guidance strong {
+  color: #3d4d47;
+  font-weight: 700;
+}
+
+.community-add-action {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+/* Any generic notice left elsewhere should not become a giant AI banner. */
+.notice {
+  width: fit-content;
+  max-width: min(620px, 100%);
+  padding: 9px 0 9px 12px;
+  border: 0;
+  border-right: 2px solid #c8aa78;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #626b66;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ---------- Journey planner: make actions unmistakably interactive ---------- */
+.journey-location-value {
+  min-height: 56px;
+  padding: 9px 11px;
+  border: 1px solid #d4dbd7;
+  border-radius: 9px;
+  background: #fff;
+  transition: border-color 130ms ease, background-color 130ms ease;
+}
+
+.journey-location-value:hover,
+.journey-location-value:focus-visible {
+  border-color: #8ba99f;
+  background: #fcfdfc;
+}
+
+.journey-location-value:focus-visible,
+.journey-text-field:focus-within,
+.journey-inline-action:focus-visible,
+.journey-quick-places button:focus-visible,
+.journey-accessibility-toggle:focus-visible {
+  outline: 2px solid rgba(15, 107, 84, 0.22);
+  outline-offset: 2px;
+}
+
+.journey-inline-action {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #d8dedb;
+  border-radius: 6px;
+  background: #fff;
+  color: #315c50;
+  line-height: 1;
+}
+
+.journey-inline-action:hover {
+  border-color: #94aaa2;
+  background: #f7f9f8;
+}
+
+.journey-quick-places > div {
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.journey-quick-places button {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid #d9dfdb !important;
+  border-radius: 6px;
+  background: #fff;
+  color: #4f5e58;
+}
+
+.journey-quick-places button:first-child {
+  padding-right: 11px;
+}
+
+.journey-quick-places button.is-selected {
+  border-color: #8ba99f !important;
+  background: #f4f8f6;
+  color: #174d40;
+}
+
+.journey-options-bar {
+  min-height: auto;
+  gap: 8px;
+  border: 0;
+}
+
+.journey-option-static,
+.journey-accessibility-toggle {
+  min-height: 54px;
+  padding: 9px 11px;
+  border: 1px solid #d9dfdb;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.journey-option-static {
+  padding-left: 11px;
+  border-left: 1px solid #d9dfdb;
+}
+
+.journey-accessibility-toggle {
+  padding-right: 11px;
+}
+
+.journey-accessibility-toggle:hover {
+  border-color: #99aca5;
+  background: #fbfcfb;
+}
+
+/* ---------- Map: RTL controls with breathing room ---------- */
+.map-frame,
+.route-map,
+.leaflet-container {
+  direction: rtl;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #fff;
+}
+
+.leaflet-popup-content {
+  direction: rtl;
+  text-align: right;
+  font-family: inherit;
+  color: #1d3029;
+}
+
+.map-control-dock {
+  left: auto;
+  right: 18px;
+  bottom: 20px;
+  gap: 9px;
+  direction: rtl;
+}
+
+.map-control-group {
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.map-control-button,
+.map-layer-toggle {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 11px;
+  border: 1px solid rgba(27, 55, 47, 0.18);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 2px 8px rgba(23, 45, 38, 0.10);
+  backdrop-filter: none;
+}
+
+.map-control-button:hover {
+  border-color: rgba(23, 77, 64, 0.36);
+  background: #fff;
+}
+
+.map-layer-toggle.is-active {
+  border-color: #173b32;
+  background: #173b32;
+  color: #fff;
+}
+
+.route-map-screen .map-control-dock,
+.navigation-shell .map-control-dock {
+  left: auto;
+  right: 18px;
+  top: 88px;
+  bottom: auto;
+}
+
+/* Keep legal attribution away from product controls. */
+.leaflet-control-attribution {
+  direction: ltr;
+  text-align: left;
+  border-radius: 5px 0 0 0;
+}
+
+/* Reduce template-like glass treatments. */
+.route-map-toolbar,
+.route-picker-sheet,
+.map-context {
+  backdrop-filter: none;
+}
+
+.route-map-toolbar {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(18, 43, 35, 0.09);
+}
+
+.route-picker-sheet {
+  background: #fbfaf7;
+  border-radius: 12px;
+  box-shadow: 0 7px 24px rgba(17, 40, 33, 0.14);
+}
+
+.map-context {
+  right: 18px;
+  left: auto;
+  max-width: 250px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(16, 47, 40, 0.07);
+  text-align: right;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+  .brand-mark__icon {
+    width: 31px;
+    height: 31px;
+  }
+
+  .brand-mark__text strong {
+    font-size: 16px;
+  }
+
+  .community-topline {
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .community-guidance {
+    margin-top: 10px !important;
+    font-size: 11px !important;
+  }
+
+  .community-add-action {
+    min-height: 42px;
+  }
+
+  .journey-inline-action {
+    min-height: 30px;
+    padding-inline: 8px;
+  }
+
+  .journey-quick-places > div {
+    gap: 5px;
+  }
+
+  .journey-quick-places button {
+    min-height: 35px;
+    padding-inline: 10px;
+    border-radius: 6px;
+  }
+
+  .journey-options-bar {
+    grid-template-columns: 0.72fr 1.28fr;
+  }
+
+  .route-map-screen .map-control-dock,
+  .navigation-shell .map-control-dock {
+    top: calc(72px + env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    left: auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 9px;
+  }
+
+  .home-map .map-control-dock {
+    right: max(12px, env(safe-area-inset-right));
+    left: auto;
+    bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .map-control-group {
+    flex-direction: column;
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .map-control-group .map-control-button {
+    border-bottom: 1px solid rgba(27, 55, 47, 0.18);
+    border-radius: 9px;
+  }
+
+  .map-control-button,
+  .map-layer-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 9px;
+  }
+
+  .route-picker-sheet {
+    right: 10px;
+    width: calc(100% - 20px);
+    border-radius: 14px;
+  }
+
+  .map-context {
+    top: 12px;
+    right: 12px;
+    left: auto;
+    max-width: min(250px, calc(100% - 24px));
+  }
+
+  .leaflet-control-attribution {
+    max-width: 62vw;
+    font-size: 6.5px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .journey-options-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-option-static,
+  .journey-accessibility-toggle {
+    width: 100%;
+  }
+}
