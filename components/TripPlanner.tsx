@@ -14,6 +14,8 @@ type GeocodeResult = {
   lon: number;
 };
 
+const activePreferences = new Set<PreferenceId>(["wheelchair", "senior"]);
+
 function wait(milliseconds: number) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
@@ -31,6 +33,7 @@ export function TripPlanner() {
   const [error, setError] = useState("");
 
   function toggleNeed(id: PreferenceId) {
+    if (!activePreferences.has(id)) return;
     setNeeds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   }
 
@@ -136,17 +139,57 @@ export function TripPlanner() {
       </div>
       <fieldset className="planner-field">
         <legend>وقت الانطلاق</legend>
-        <div className="time-options">{departureOptions.map((option) => <button key={option} type="button" className={time === option ? "is-selected" : ""} onClick={() => setTime(option)}><Clock3 size={16} />{option}</button>)}</div>
+        <div className="time-options">
+          {departureOptions.map((option) => {
+            const available = option === "الآن";
+            return (
+              <button
+                key={option}
+                type="button"
+                className={time === option ? "is-selected" : ""}
+                onClick={() => available && setTime(option)}
+                disabled={!available}
+                title={available ? undefined : "يحتاج ربط محرك الحرارة والظل بالتنبؤ الزمني"}
+              >
+                <Clock3 size={16} />{option}{!available && <small>قريبًا</small>}
+              </button>
+            );
+          })}
+        </div>
+        <small className="planner-capability-note">اختيار أفضل وقت حسب الحرارة والظل غير مفعّل حتى نربط مصدرًا فعليًا للتنبؤ، لذلك لن نغيّر النتيجة بأرقام وهمية.</small>
       </fieldset>
       <div className="planner-needs">
         <button type="button" className="planner-needs__toggle" aria-expanded={showNeeds} onClick={() => setShowNeeds((value) => !value)}>
           <span><SlidersHorizontal size={17} /> احتياجات الرحلة</span><span className="planner-needs__summary">{needs.length ? `${needs.length} محددة` : "اختياري"}<ChevronDown size={16} className={showNeeds ? "is-open" : ""} /></span>
         </button>
-        {showNeeds && <div className="planner-needs__options" aria-label="تخصيص احتياجات الرحلة">{travelPreferences.map((item) => { const selected = needs.includes(item.id); return <button key={item.id} type="button" className={selected ? "is-selected" : ""} aria-pressed={selected} onClick={() => toggleNeed(item.id)}><span className="planner-needs__check">{selected && <Check size={14} />}</span><span><strong>{item.label}</strong><small>{item.description}</small></span></button>; })}</div>}
+        {showNeeds && (
+          <div className="planner-needs__options" aria-label="تخصيص احتياجات الرحلة">
+            {travelPreferences.map((item) => {
+              const selected = needs.includes(item.id);
+              const available = activePreferences.has(item.id);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${selected ? "is-selected" : ""} ${!available ? "is-unavailable" : ""}`}
+                  aria-pressed={selected}
+                  onClick={() => toggleNeed(item.id)}
+                  disabled={!available}
+                  title={available ? undefined : "هذه الخاصية تحتاج طبقة بيانات تشغيلية غير موصولة بعد"}
+                >
+                  <span className="planner-needs__check">{selected && <Check size={14} />}</span>
+                  <span><strong>{item.label}</strong><small>{available ? item.description : `${item.description} · يحتاج مصدر بيانات فعلي`}</small></span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       {error && <div className="logic-error" role="alert">{error}</div>}
       <button type="submit" className="primary-action" disabled={planning || locating}><Navigation size={19} />{planning ? "جاري البحث وحساب المسار…" : "احسب مسار المشي"}</button>
-      <p className="planner-note">البحث يتم فقط عند الضغط على الزر. المسار والمسافة والتوجيهات تأتي من OpenStreetMap/Valhalla؛ مؤشر الظل والازدحام الحي يحتاج مصادر بيانات منفصلة ولن نعرضه كأنه حقيقي.</p>
+      <p className="planner-note">
+        بحث الأماكن: Nominatim · © OpenStreetMap contributors. المسار والمسافة والتوجيهات: Valhalla + OpenStreetMap. التتبع: GPS الجهاز. الظل والازدحام الحي غير موصولين حتى الآن.
+      </p>
     </form>
   );
 }
