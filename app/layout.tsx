@@ -10,6 +10,7 @@ import "./mobile-app.css";
 import "./mobile-fixes.css";
 import "./map-first.css";
 import "./saudi-polish.css";
+import "./premium-rtl.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = Almarai({
@@ -19,7 +20,7 @@ const font = Almarai({
 });
 
 export const metadata: Metadata = {
-  title: "ظل المدينة | مسارات أريح للمشي",
+  title: "ظل المدينة",
   description: "تجربة ملاحة حضرية للمشي داخل المدينة المنورة.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
