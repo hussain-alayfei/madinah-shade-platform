@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const VOICE_INSTRUCTIONS = `
+const BASE_VOICE_INSTRUCTIONS = `
 أنت المساعد الصوتي لتطبيق "ظل المدينة".
-تكلم بلهجة سعودية طبيعية ومحترمة وبسيطة، بدون مبالغة أو تصنع.
+تكلم بلهجة سعودية نجدية محلية طبيعية ومعاصرة، بصياغة يستخدمها الناس في الرياض ونجد، بدون تصنع أو مبالغة أو خلط بلهجات عربية أخرى.
+استخدم عبارات سعودية بسيطة عند ملاءمتها مثل: أبشر، تم، حياك، وين تبي تروح، خلني أجهز لك، لكن لا تكررها في كل رد.
+حافظ على نطق عربي سعودي واضح ومريح لكبار السن والمكفوفين، بسرعة متوسطة ووقفات طبيعية وجمل قصيرة.
 ابدأ بالمعلومة الأهم، واجعل الرد غالبًا من جملة إلى ثلاث جمل قصيرة.
 لا تشرح للمستخدم أي تفاصيل تقنية أو أسماء أنظمة أو خدمات أو نماذج أو مفاتيح أو مزودين.
 لا تقل إنك ذكاء اصطناعي ولا تشرح كيف تعمل إلا إذا سأل المستخدم مباشرة.
@@ -15,6 +17,19 @@ const VOICE_INSTRUCTIONS = `
 إذا طلب استراحات أكثر أو تقليل الزحمة، مرر ذلك للأداة.
 لا تعطِ تعليمات ملاحية خطرة ولا تدّع معرفة موقع المستخدم قبل أن يشاركه التطبيق.
 `;
+
+const VOICE_PROFILES = {
+  male: {
+    voice: "cedar",
+    instruction: "قدّم صوتًا رجاليًا هادئًا وواضحًا بطابع سعودي نجدي محلي، دافئ وغير إذاعي أو رسمي زيادة.",
+  },
+  female: {
+    voice: "marin",
+    instruction: "قدّمي صوتًا نسائيًا هادئًا وواضحًا بطابع سعودي نجدي محلي، طبيعي وغير إذاعي أو رسمي زيادة.",
+  },
+} as const;
+
+type VoiceProfile = keyof typeof VOICE_PROFILES;
 
 const tools = [
   {
@@ -68,10 +83,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "تعذر بدء المحادثة." }, { status: 400 });
   }
 
+  const requestedProfile = request.nextUrl.searchParams.get("voice");
+  const profileName: VoiceProfile = requestedProfile === "male" ? "male" : "female";
+  const profile = VOICE_PROFILES[profileName];
+
   const session = {
     type: "realtime",
     model: "gpt-realtime-2.1",
-    instructions: VOICE_INSTRUCTIONS,
+    instructions: `${BASE_VOICE_INSTRUCTIONS}\n${profile.instruction}`,
     max_output_tokens: 220,
     output_modalities: ["audio"],
     tool_choice: "auto",
@@ -82,7 +101,7 @@ export async function POST(request: NextRequest) {
         transcription: {
           model: "gpt-4o-mini-transcribe",
           language: "ar",
-          prompt: "لهجة سعودية وأسماء أماكن في المدينة المنورة مثل المسجد النبوي وقباء والقبلتين وأحد.",
+          prompt: "لهجة سعودية نجدية محلية، مع أسماء أماكن المدينة المنورة مثل المسجد النبوي وقباء والقبلتين وأحد. حافظ على الكلمات العامية السعودية كما نطقها المتحدث.",
         },
         turn_detection: {
           type: "semantic_vad",
@@ -92,13 +111,11 @@ export async function POST(request: NextRequest) {
         },
       },
       output: {
-        voice: "marin",
+        voice: profile.voice,
       },
     },
   };
 
-  // Realtime's unified WebRTC endpoint expects regular multipart text fields.
-  // Sending Blob/file parts can be parsed as attachments instead of the required fields.
   const form = new FormData();
   form.set("sdp", sdp);
   form.set("session", JSON.stringify(session));

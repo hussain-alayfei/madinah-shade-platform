@@ -44,7 +44,7 @@
 
 .realtime-voice-dialog {
   width: min(520px, calc(100% - 32px));
-  max-height: min(700px, calc(100dvh - 32px));
+  max-height: min(720px, calc(100dvh - 32px));
   padding: 0;
   overflow: hidden;
   border: 1px solid #cfd8d2;
@@ -59,7 +59,7 @@
 }
 
 .realtime-voice-shell {
-  max-height: min(700px, calc(100dvh - 32px));
+  max-height: min(720px, calc(100dvh - 32px));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -134,10 +134,49 @@
   line-height: 1.45;
 }
 
-.realtime-voice-welcome p {
+.realtime-voice-welcome > p {
   margin: 0;
   color: #68736d;
   font-size: 15px;
+}
+
+.realtime-voice-choice {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.realtime-voice-choice button {
+  min-height: 68px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px 14px;
+  border: 1px solid #ccd6d0;
+  border-radius: 10px;
+  background: #fff;
+  color: #29433a;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.realtime-voice-choice button strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.realtime-voice-choice button span {
+  color: #6a756f;
+  font-size: 12px;
+}
+
+.realtime-voice-choice button.is-selected {
+  border-color: #174d40;
+  background: #f3f7f5;
+  box-shadow: inset 0 0 0 1px #174d40;
 }
 
 .realtime-voice-status {
@@ -145,26 +184,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px 0 16px;
+  margin: 10px 0 14px;
   color: #53615a;
   font-size: 14px;
   font-weight: 700;
   text-align: center;
-}
-
-.realtime-voice-latest {
-  margin: 0 0 16px;
-  padding: 14px 0;
-  border-top: 1px solid #e5e9e6;
-  border-bottom: 1px solid #e5e9e6;
-}
-
-.realtime-voice-latest p {
-  margin: 0;
-  color: #21372e;
-  font-size: 17px;
-  line-height: 1.9;
-  white-space: pre-wrap;
 }
 
 .realtime-start {
@@ -193,6 +217,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  margin-top: 14px;
 }
 
 .realtime-live-controls button {
@@ -223,6 +248,10 @@
   margin-top: 14px;
 }
 
+.realtime-voice-secondary--single button {
+  min-width: 154px;
+}
+
 .realtime-voice-secondary button {
   min-height: 48px;
   display: inline-flex;
@@ -241,15 +270,21 @@
 }
 
 .realtime-voice-transcript {
-  max-height: 230px;
+  max-height: 250px;
   overflow-y: auto;
-  margin-top: 16px;
-  padding-top: 4px;
+  margin: 0 0 14px;
+  padding: 4px 0;
   border-top: 1px solid #e4e8e5;
+  border-bottom: 1px solid #e4e8e5;
+  scroll-behavior: smooth;
+}
+
+.realtime-voice-transcript--live {
+  min-height: 74px;
 }
 
 .realtime-message {
-  padding: 12px 0;
+  padding: 11px 0;
   border-bottom: 1px solid #edf0ee;
 }
 
@@ -264,18 +299,36 @@
   font-size: 11px;
 }
 
+.realtime-message--user strong {
+  color: #174d40;
+}
+
 .realtime-message p,
 .realtime-voice-empty {
   margin: 0;
   color: #263a32;
-  font-size: 15px;
-  line-height: 1.85;
+  font-size: 16px;
+  line-height: 1.8;
   white-space: pre-wrap;
 }
 
+.realtime-message.is-live p {
+  font-weight: 700;
+}
+
+.realtime-live-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-inline-start: 5px;
+  border-inline-end: 2px solid #174d40;
+  vertical-align: -0.16em;
+}
+
 .realtime-voice-empty {
-  padding: 14px 0;
+  padding: 18px 0;
   color: #7a837e;
+  text-align: center;
 }
 
 .realtime-voice-form {
@@ -347,15 +400,19 @@
   }
 
   .realtime-voice-main {
-    padding: 22px 18px 28px;
+    padding: 20px 18px 28px;
   }
 
   .realtime-voice-welcome {
-    padding-top: 7vh;
+    padding-top: 3vh;
   }
 
   .realtime-voice-welcome h3 {
     font-size: 23px;
+  }
+
+  .realtime-voice-choice button {
+    min-height: 72px;
   }
 
   .realtime-start {
@@ -366,6 +423,10 @@
   .realtime-live-controls button {
     min-height: 64px;
   }
+
+  .realtime-voice-transcript {
+    max-height: min(38dvh, 290px);
+  }
 }
 
 @media (max-width: 380px) {
@@ -375,13 +436,12 @@
     font-size: 13px;
   }
 
-  .realtime-live-controls {
+  .realtime-voice-choice {
     grid-template-columns: 1fr;
   }
 
-  .realtime-voice-secondary {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .realtime-live-controls {
+    grid-template-columns: 1fr;
   }
 }
 
