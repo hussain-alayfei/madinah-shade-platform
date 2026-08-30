@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLiveRoutes, formatDistance, parseLiveTrip, tripToSearchParams, type LiveRoute } from "@/lib/maps";
 import { MapView } from "./MapView";
+import { StatusMessage } from "./StatusMessage";
 import styles from "./RouteDetails.module.css";
 
 export function RouteDetails() {
@@ -27,7 +28,7 @@ export function RouteDetails() {
     try {
       setRoutes(await fetchLiveRoutes(trip));
     } catch (routeError) {
-      setError(routeError instanceof Error ? routeError.message : "تعذر تحميل المسار.");
+      setError(routeError instanceof Error ? routeError.message : "تعذر تحميل المسار الآن.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +41,12 @@ export function RouteDetails() {
   if (!trip) {
     return (
       <main className="content-shell content-shell--narrow">
-        <div className="logic-error">بيانات الرحلة غير موجودة. <Link href="/">ابدأ من جديد</Link>.</div>
+        <StatusMessage
+          tone="warning"
+          title="بيانات الرحلة غير مكتملة"
+          description="ارجع للبداية وحدد نقطة الانطلاق والوجهة من جديد."
+          action={<Link href="/">ابدأ من جديد</Link>}
+        />
       </main>
     );
   }
@@ -57,10 +63,16 @@ export function RouteDetails() {
 
         {loading && <div className="route-loading">جاري تجهيز تفاصيل الطريق…</div>}
         {error && (
-          <div className="logic-error" role="alert">
-            <span>{error}</span>
-            <button type="button" className="secondary-action" onClick={() => void load()}><RefreshCw size={16} /> إعادة المحاولة</button>
-          </div>
+          <StatusMessage
+            tone="warning"
+            title="تعذر تجهيز تفاصيل الطريق"
+            description={error}
+            action={(
+              <button type="button" onClick={() => void load()}>
+                <RefreshCw size={14} /> حاول مرة ثانية
+              </button>
+            )}
+          />
         )}
 
         {route && (

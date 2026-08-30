@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLiveRoutes, formatDistance, parseLiveTrip, tripToSearchParams, type LiveRoute } from "@/lib/maps";
 import { MapView } from "./MapView";
+import { StatusMessage } from "./StatusMessage";
 
 export function RoutePlannerView() {
   const params = useSearchParams();
@@ -31,7 +32,7 @@ export function RoutePlannerView() {
         current && nextRoutes.some((route) => route.id === current) ? current : nextRoutes[0].id,
       );
     } catch (routeError) {
-      setError(routeError instanceof Error ? routeError.message : "تعذر حساب المسارات.");
+      setError(routeError instanceof Error ? routeError.message : "تعذر حساب المسارات الآن.");
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,12 @@ export function RoutePlannerView() {
   if (!trip) {
     return (
       <main className="content-shell content-shell--narrow">
-        <div className="logic-error">بيانات الرحلة غير موجودة. <Link href="/">ابدأ رحلة جديدة</Link>.</div>
+        <StatusMessage
+          tone="warning"
+          title="بيانات الرحلة غير مكتملة"
+          description="ارجع للبداية وحدد نقطة الانطلاق والوجهة من جديد."
+          action={<Link href="/">ابدأ رحلة جديدة</Link>}
+        />
       </main>
     );
   }
@@ -103,12 +109,16 @@ export function RoutePlannerView() {
         {loading && <div className="route-loading route-loading--sheet">نرتب لك طرق المشي…</div>}
 
         {error && (
-          <div className="logic-error route-sheet-error" role="alert">
-            <span>{error}</span>
-            <button type="button" className="secondary-action" onClick={() => void loadRoutes()}>
-              <RefreshCw size={16} /> جرّب مرة ثانية
-            </button>
-          </div>
+          <StatusMessage
+            tone="warning"
+            title="ما قدرنا نجهز المسار"
+            description={error}
+            action={(
+              <button type="button" onClick={() => void loadRoutes()}>
+                <RefreshCw size={14} /> حاول مرة ثانية
+              </button>
+            )}
+          />
         )}
 
         {!loading && !error && (

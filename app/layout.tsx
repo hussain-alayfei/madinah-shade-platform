@@ -11,6 +11,7 @@ import "./mobile-fixes.css";
 import "./map-first.css";
 import "./saudi-polish.css";
 import "./premium-rtl.css";
+import "./status-messages.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = Almarai({

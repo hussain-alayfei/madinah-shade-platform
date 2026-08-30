@@ -1,0 +1,192 @@
+/* Compact, contextual status feedback. Avoid full-width AI-style alert banners. */
+.status-message {
+  --status-accent: #66736d;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0 10px 12px;
+  border: 0;
+  border-inline-start: 2px solid var(--status-accent);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  direction: rtl;
+  text-align: right;
+}
+
+.status-message--error { --status-accent: #a84a3b; }
+.status-message--warning { --status-accent: #a27634; }
+.status-message--info { --status-accent: #356c5e; }
+
+.status-message__icon {
+  margin-top: 2px;
+  color: var(--status-accent);
+}
+
+.status-message__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.status-message__copy strong {
+  color: #263a33;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.status-message__copy span {
+  color: #68736e;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.status-message__action {
+  align-self: center;
+}
+
+.status-message__action button,
+.status-message__action a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #d1d9d5;
+  border-radius: 6px;
+  background: #fff;
+  color: #245347;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status-message__action button:hover,
+.status-message__action a:hover {
+  border-color: #98aaa3;
+  background: #f9fbfa;
+}
+
+.route-picker-sheet .status-message,
+.navigation-sheet .status-message {
+  margin: 5px 0 2px;
+}
+
+/* Fallback for older states that still use the generic class. */
+.logic-error {
+  width: 100%;
+  max-width: 620px;
+  padding: 10px 0 10px 12px !important;
+  border: 0 !important;
+  border-inline-start: 2px solid #a84a3b !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #5f4a45;
+  direction: rtl;
+  text-align: right;
+}
+
+/* Service-area feedback uses the same editorial pattern instead of another card. */
+.service-area-card {
+  border: 0 !important;
+  border-inline-start: 2px solid #a27634 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 10px 0 10px 12px !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.service-area-card strong {
+  color: #394942;
+  font-size: 13px;
+}
+
+.service-area-card p {
+  margin: 3px 0 7px;
+  color: #707973;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.service-area-card button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d1d9d5;
+  border-radius: 6px;
+  background: #fff;
+  color: #245347;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Navigation notices should read as contextual state, not floating cards. */
+.nav-start-context,
+.gps-permission-card,
+.nav-decision {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-start: 2px solid #a27634 !important;
+  padding: 10px 0 10px 12px !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.gps-permission-card {
+  border-inline-start-color: #356c5e !important;
+}
+
+.nav-decision {
+  border-inline-start-color: #a84a3b !important;
+}
+
+.nav-start-context__copy strong,
+.nav-decision__copy strong,
+.gps-permission-card strong {
+  color: #34453e;
+  font-size: 13px;
+}
+
+.nav-start-context__copy span,
+.nav-decision__copy span,
+.gps-permission-card span {
+  color: #6c756f;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .status-message {
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px 9px;
+    padding-block: 9px;
+  }
+
+  .status-message__action {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .status-message__action button,
+  .status-message__action a {
+    min-height: 34px;
+    padding-inline: 9px;
+  }
+
+  .service-area-card,
+  .nav-start-context,
+  .gps-permission-card,
+  .nav-decision {
+    padding-block: 9px !important;
+  }
+}
