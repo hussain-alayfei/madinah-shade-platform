@@ -1,0 +1,440 @@
+.voice-assistant-launcher {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2400;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 8px;
+  border: 1px solid rgba(12, 68, 54, 0.15);
+  border-radius: 999px;
+  background: #0f5a47;
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(15, 65, 52, 0.2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.voice-assistant-launcher:hover {
+  background: #0b4b3c;
+}
+
+.voice-assistant-launcher:focus-visible,
+.voice-assistant-dialog button:focus-visible,
+.voice-assistant-dialog input:focus-visible,
+.voice-assistant-dialog label:has(input:focus-visible) {
+  outline: 3px solid #d6a85a;
+  outline-offset: 3px;
+}
+
+.voice-assistant-launcher__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.voice-assistant-dialog {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(760px, calc(100dvh - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fffdf9;
+  color: #18362e;
+  box-shadow: 0 30px 90px rgba(5, 31, 24, 0.3);
+}
+
+.voice-assistant-dialog::backdrop {
+  background: rgba(8, 30, 24, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+.voice-assistant-shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(120px, 1fr) auto auto auto auto;
+  max-height: min(760px, calc(100dvh - 32px));
+}
+
+.voice-assistant-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 22px 17px;
+  border-bottom: 1px solid #e5e8e4;
+  background: #f7f6f1;
+}
+
+.voice-assistant-header h2 {
+  margin: 4px 0 5px;
+  font-size: 23px;
+  line-height: 1.35;
+  color: #123f33;
+}
+
+.voice-assistant-header p {
+  max-width: 460px;
+  margin: 0;
+  color: #64706a;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.voice-assistant-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #765d32;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.voice-assistant-close {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8ddd9;
+  border-radius: 50%;
+  background: #fff;
+  color: #284b41;
+  cursor: pointer;
+}
+
+.voice-assistant-status {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  border-bottom: 1px solid #eaede9;
+  color: #52635c;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.voice-assistant-status > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8d9993;
+}
+
+.voice-assistant-status > span.is-listening {
+  background: #a74636;
+  box-shadow: 0 0 0 6px rgba(167, 70, 54, 0.1);
+}
+
+.voice-assistant-messages {
+  min-height: 145px;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px 22px;
+  background: #fffdf9;
+}
+
+.voice-message {
+  max-width: 88%;
+}
+
+.voice-message > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #7b857f;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.voice-message p {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 13px;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.voice-message--assistant {
+  justify-self: end;
+}
+
+.voice-message--assistant p {
+  border: 1px solid #dfe7e2;
+  background: #f3f7f4;
+  color: #24483d;
+}
+
+.voice-message--user {
+  justify-self: start;
+}
+
+.voice-message--user > span {
+  text-align: left;
+}
+
+.voice-message--user p {
+  background: #173f34;
+  color: #fff;
+}
+
+.voice-assistant-quick {
+  display: flex;
+  gap: 8px;
+  padding: 0 22px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.voice-assistant-quick::-webkit-scrollbar {
+  display: none;
+}
+
+.voice-assistant-quick button {
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding: 0 13px;
+  border: 1px solid #d7ded9;
+  border-radius: 999px;
+  background: #fff;
+  color: #345349;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.voice-assistant-controls {
+  display: grid;
+  gap: 14px;
+  padding: 18px 22px;
+  border-top: 1px solid #e3e8e4;
+  background: #faf9f5;
+}
+
+.voice-mic-button {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  border: 0;
+  border-radius: 14px;
+  background: #0f5a47;
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.voice-mic-button:hover:not(:disabled) {
+  background: #0b4b3c;
+}
+
+.voice-mic-button.is-listening {
+  background: #8e3f32;
+}
+
+.voice-mic-button:disabled {
+  background: #d9dedb;
+  color: #66716b;
+  cursor: not-allowed;
+}
+
+.voice-assistant-support-note {
+  margin: -4px 0 0;
+  color: #73594c;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.voice-assistant-form {
+  display: grid;
+  gap: 7px;
+}
+
+.voice-assistant-form > label {
+  color: #596963;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.voice-assistant-form > div {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  border: 1px solid #cfd8d2;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.voice-assistant-form input {
+  min-width: 0;
+  padding: 0 14px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #203c33;
+  font: inherit;
+  font-size: 13px;
+}
+
+.voice-assistant-form button {
+  width: 48px;
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-right: 1px solid #dce2de;
+  background: #f1f5f2;
+  color: #0f5a47;
+  cursor: pointer;
+}
+
+.voice-assistant-form button:disabled {
+  color: #9aa39f;
+  cursor: not-allowed;
+}
+
+.voice-assistant-preferences {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 13px 22px;
+  border-top: 1px solid #e5e9e6;
+  background: #fff;
+}
+
+.voice-assistant-preferences label {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #4f6059;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voice-assistant-preferences input {
+  width: 20px;
+  height: 20px;
+  accent-color: #0f5a47;
+}
+
+.voice-assistant-preferences label > span,
+.voice-stop-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.voice-stop-button {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid #d9d2cf;
+  border-radius: 8px;
+  background: #fff8f5;
+  color: #7f4437;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voice-assistant-footnote {
+  margin: 0;
+  padding: 11px 22px 15px;
+  border-top: 1px solid #edf0ed;
+  background: #fff;
+  color: #7b847f;
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.voice-assistant-dialog.is-large-text .voice-assistant-header p,
+.voice-assistant-dialog.is-large-text .voice-assistant-status,
+.voice-assistant-dialog.is-large-text .voice-message p,
+.voice-assistant-dialog.is-large-text .voice-assistant-form input,
+.voice-assistant-dialog.is-large-text .voice-assistant-support-note {
+  font-size: 15px;
+}
+
+.voice-assistant-dialog.is-large-text .voice-message > span,
+.voice-assistant-dialog.is-large-text .voice-assistant-form > label,
+.voice-assistant-dialog.is-large-text .voice-assistant-preferences label,
+.voice-assistant-dialog.is-large-text .voice-assistant-footnote {
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .voice-assistant-launcher {
+    left: 12px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    min-height: 50px;
+    padding-left: 7px;
+    font-size: 12px;
+  }
+
+  .voice-assistant-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 17px;
+  }
+
+  .voice-assistant-shell {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .voice-assistant-header {
+    padding: 18px 16px 14px;
+  }
+
+  .voice-assistant-header h2 {
+    font-size: 21px;
+  }
+
+  .voice-assistant-status,
+  .voice-assistant-messages,
+  .voice-assistant-controls,
+  .voice-assistant-preferences,
+  .voice-assistant-footnote {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .voice-assistant-quick {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .voice-mic-button {
+    min-height: 76px;
+  }
+
+  .voice-assistant-preferences {
+    gap: 8px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-assistant-launcher,
+  .voice-assistant-dialog,
+  .voice-assistant-status > span {
+    transition: none !important;
+    animation: none !important;
+  }
+}
