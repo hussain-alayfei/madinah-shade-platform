@@ -21,11 +21,11 @@ function isActive(pathname: string, href: string) {
 export function AppHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const navigationMode = pathname === "/navigate";
+  const immersiveMapMode = pathname === "/navigate" || pathname === "/plan";
 
   return (
     <>
-      <header className={`app-header ${navigationMode ? "app-header--navigation" : ""}`}>
+      <header className={`app-header ${immersiveMapMode ? "app-header--immersive" : ""}`}>
         <div className="app-header__inner">
           <Link href="/" className="app-header__brand" onClick={() => setOpen(false)}>
             <BrandMark />
@@ -65,7 +65,7 @@ export function AppHeader() {
         )}
       </header>
 
-      {!navigationMode && (
+      {!immersiveMapMode && (
         <nav className="mobile-tabbar" aria-label="التنقل الرئيسي للتطبيق">
           {links.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);

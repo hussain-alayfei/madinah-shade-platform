@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, RefreshCw, SearchCheck, ShieldCheck } from "lucide-react";
+import { ArrowRight, Navigation, RefreshCw } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLiveRoutes, parseLiveTrip, tripToSearchParams, type LiveRoute } from "@/lib/maps";
+import { fetchLiveRoutes, formatDistance, parseLiveTrip, tripToSearchParams, type LiveRoute } from "@/lib/maps";
 import { MapView } from "./MapView";
-import { RouteCard } from "./RouteCard";
 
 export function RoutePlannerView() {
   const params = useSearchParams();
@@ -22,12 +21,15 @@ export function RoutePlannerView() {
       setError("بيانات الرحلة ناقصة. ابدأ من الصفحة الرئيسية.");
       return;
     }
+
     setLoading(true);
     setError("");
     try {
       const nextRoutes = await fetchLiveRoutes(trip);
       setRoutes(nextRoutes);
-      setSelected((current) => current && nextRoutes.some((route) => route.id === current) ? current : nextRoutes[0].id);
+      setSelected((current) =>
+        current && nextRoutes.some((route) => route.id === current) ? current : nextRoutes[0].id,
+      );
     } catch (routeError) {
       setError(routeError instanceof Error ? routeError.message : "تعذر حساب المسارات.");
     } finally {
@@ -51,71 +53,105 @@ export function RoutePlannerView() {
   const tripQuery = tripToSearchParams(trip).toString();
 
   return (
-    <main className="plan-shell">
-      <section className="plan-panel">
-        <div className="section-header">
-          <Link href="/" className="text-action"><ArrowRight size={16} />تعديل الرحلة</Link>
-          <h1>اختر المسار المناسب</h1>
-          <p>{trip.originLabel} ← {trip.destinationLabel}</p>
+    <main className="route-map-screen">
+      <section className="route-map-canvas" aria-label="خريطة مقارنة المسارات">
+        <div className="map-frame">
+          <MapView
+            routes={routes}
+            selected={selectedRoute?.id}
+            showAll
+            origin={trip.origin}
+            destination={trip.destination}
+            onSelectRoute={(routeId) => setSelected(routeId)}
+          />
         </div>
+      </section>
 
-        <div className="live-source-note">
-          <ShieldCheck size={18} />
+      <div className="route-map-toolbar">
+        <Link href="/" className="route-map-back" aria-label="العودة لتعديل الرحلة">
+          <ArrowRight size={19} />
+        </Link>
+        <div className="route-map-trip">
+          <span>{trip.originLabel}</span>
+          <strong>{trip.destinationLabel}</strong>
+        </div>
+        <Link href="/" className="route-map-edit">تعديل</Link>
+      </div>
+
+      <section className="route-picker-sheet" aria-label="اختيار المسار">
+        <div className="route-sheet-handle" aria-hidden="true" />
+
+        <header className="route-sheet-header">
           <div>
-            <strong>كل خيار ظاهر هنا يمثل طريقًا مختلفًا فعليًا.</strong>
-            <span>إذا لم نجد ثلاثة طرق مختلفة بوضوح، نعرض عددًا أقل بدل تكرار نفس المسار بأسماء مختلفة.</span>
+            <h1>اختر مسارك</h1>
+            <p>
+              {loading
+                ? "جاري تجهيز الخيارات…"
+                : routes.length > 1
+                  ? `${routes.length} مسارات مختلفة متاحة`
+                  : "المسار المتاح بين النقطتين"}
+            </p>
           </div>
-        </div>
+          {selectedRoute && (
+            <div className="route-sheet-primary-stat">
+              <strong>{selectedRoute.durationMinutes} د</strong>
+              <span>{formatDistance(selectedRoute.distanceMeters)}</span>
+            </div>
+          )}
+        </header>
 
-        {loading && <div className="route-loading">جاري تجهيز طرق المشي المتاحة…</div>}
+        {loading && <div className="route-loading route-loading--sheet">جاري تجهيز طرق المشي…</div>}
 
         {error && (
-          <div className="logic-error" role="alert">
+          <div className="logic-error route-sheet-error" role="alert">
             <span>{error}</span>
-            <div className="logic-error__actions">
-              <Link href="/" className="secondary-action">تعديل الرحلة</Link>
-              <button type="button" className="secondary-action" onClick={() => void loadRoutes()}><RefreshCw size={16} /> إعادة المحاولة</button>
-            </div>
+            <button type="button" className="secondary-action" onClick={() => void loadRoutes()}>
+              <RefreshCw size={16} /> إعادة المحاولة
+            </button>
           </div>
         )}
 
         {!loading && !error && (
-          <>
-            <p className="route-count-note">
-              {routes.length === 1 ? "يتوفر طريق واحد واضح بين النقطتين." : `وجدنا ${routes.length} مسارات مختلفة بين النقطتين.`}
-            </p>
-            <div className="route-list">
-              {routes.map((route, index) => (
-                <RouteCard
+          <div className="route-switcher" role="tablist" aria-label="المسارات المتاحة">
+            {routes.map((route) => {
+              const active = route.id === selectedRoute?.id;
+              return (
+                <button
                   key={route.id}
-                  route={route}
-                  recommended={index === 0}
-                  selected={route.id === selected}
-                  onSelect={() => setSelected(route.id)}
-                />
-              ))}
-            </div>
-          </>
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={`route-choice route-choice--${route.id} ${active ? "is-selected" : ""}`}
+                  onClick={() => setSelected(route.id)}
+                >
+                  <span className="route-choice__line" aria-hidden="true" />
+                  <span className="route-choice__copy">
+                    <strong>{route.name.replace("المسار ", "")}</strong>
+                    <small>{route.durationMinutes} د · {formatDistance(route.distanceMeters)}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         )}
 
         {selectedRoute && (
-          <div className="plan-actions">
-            <Link href={`/route?${tripQuery}&route=${selectedRoute.id}`} className="primary-action">
-              <SearchCheck size={19} />
-              راجع {selectedRoute.name}
+          <div className="route-selected-summary">
+            <strong>{selectedRoute.profileReason}</strong>
+            <span>{selectedRoute.description}</span>
+          </div>
+        )}
+
+        {selectedRoute && (
+          <div className="route-sheet-actions">
+            <Link href={`/route?${tripQuery}&route=${selectedRoute.id}`} className="route-details-link">
+              التفاصيل
+            </Link>
+            <Link href={`/navigate?${tripQuery}&route=${selectedRoute.id}`} className="route-start-button">
+              <Navigation size={18} /> ابدأ
             </Link>
           </div>
         )}
-      </section>
-
-      <section className="plan-map" aria-label="مقارنة المسارات على الخريطة">
-        <div className="map-frame">
-          <MapView routes={routes} selected={selectedRoute?.id} showAll origin={trip.origin} destination={trip.destination} />
-          <div className="map-context">
-            <strong>{selectedRoute?.name || "جاري تجهيز المسارات"}</strong>
-            <span>{selectedRoute ? `${selectedRoute.durationMinutes} دقيقة · ${Math.round(selectedRoute.distanceMeters)} م` : `${trip.originLabel} ← ${trip.destinationLabel}`}</span>
-          </div>
-        </div>
       </section>
     </main>
   );

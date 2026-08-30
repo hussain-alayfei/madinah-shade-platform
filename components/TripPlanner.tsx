@@ -1,19 +1,9 @@
 "use client";
 
-import {
-  Check,
-  ChevronDown,
-  CircleAlert,
-  Clock3,
-  LocateFixed,
-  MapPin,
-  Navigation,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Check, ChevronDown, CircleAlert, LocateFixed, MapPin, Navigation } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { departureOptions, travelPreferences, type PreferenceId } from "@/lib/data";
+import { FormEvent, useMemo, useState } from "react";
+import { travelPreferences, type PreferenceId } from "@/lib/data";
 import {
   isWithinMadinahServiceArea,
   madinahSuggestedPlaces,
@@ -34,16 +24,11 @@ type AreaIssue = "current" | "origin" | "destination" | null;
 
 const activePreferences = new Set<PreferenceId>(["wheelchair", "senior"]);
 
-function wait(milliseconds: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
-}
-
 export function TripPlanner() {
   const router = useRouter();
   const [startMode, setStartMode] = useState<StartMode>("current");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("المسجد النبوي");
-  const [time, setTime] = useState<(typeof departureOptions)[number]>("الآن");
   const [showNeeds, setShowNeeds] = useState(false);
   const [needs, setNeeds] = useState<PreferenceId[]>([]);
   const [currentLocation, setCurrentLocation] = useState<LatLng | null>(null);
@@ -51,6 +36,10 @@ export function TripPlanner() {
   const [planning, setPlanning] = useState(false);
   const [error, setError] = useState("");
   const [areaIssue, setAreaIssue] = useState<AreaIssue>(null);
+  const availablePreferences = useMemo(
+    () => travelPreferences.filter((item) => activePreferences.has(item.id)),
+    [],
+  );
 
   function toggleNeed(id: PreferenceId) {
     if (!activePreferences.has(id)) return;
@@ -103,7 +92,9 @@ export function TripPlanner() {
   async function geocode(query: string): Promise<GeocodeResult> {
     const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
     const payload = (await response.json().catch(() => null)) as { results?: GeocodeResult[]; error?: string } | null;
-    if (!response.ok || !payload?.results?.[0]) throw new Error(payload?.error || `لم نجد موقعًا واضحًا باسم "${query}".`);
+    if (!response.ok || !payload?.results?.[0]) {
+      throw new Error(payload?.error || `لم نجد موقعًا واضحًا باسم "${query}".`);
+    }
     return payload.results[0];
   }
 
@@ -113,11 +104,11 @@ export function TripPlanner() {
     setAreaIssue(null);
 
     if (startMode === "search" && !from.trim()) {
-      setError("اكتب نقطة البداية أو اختر واحدة من الاقتراحات.");
+      setError("اكتب نقطة البداية أو اختر مكانًا مقترحًا.");
       return;
     }
     if (!to.trim()) {
-      setError("اكتب الوجهة أو اختر واحدة من الاقتراحات.");
+      setError("اكتب الوجهة أو اختر مكانًا مقترحًا.");
       return;
     }
 
@@ -142,7 +133,6 @@ export function TripPlanner() {
           setAreaIssue("origin");
           return;
         }
-        await wait(1100);
       }
 
       const destinationResult = await geocode(to.trim());
@@ -157,8 +147,9 @@ export function TripPlanner() {
         destination,
         originLabel,
         destinationLabel: destinationResult.label,
-        time,
+        time: "الآن",
         needs,
+        originMode: startMode === "current" ? "current" : "selected",
       };
       router.push(`/plan?${tripToSearchParams(trip).toString()}`);
     } catch (planningError) {
@@ -168,120 +159,155 @@ export function TripPlanner() {
     }
   }
 
-  const currentLocationReady = currentLocation && isWithinMadinahServiceArea(currentLocation);
+  const currentLocationReady = Boolean(currentLocation && isWithinMadinahServiceArea(currentLocation));
 
   return (
-    <form className="trip-planner" aria-labelledby="trip-title" onSubmit={handleSubmit}>
-      <div className="trip-planner__intro">
-        <span className="app-eyebrow">المشي داخل المدينة المنورة</span>
-        <h1 id="trip-title">خطّط مشوارك براحة أكثر</h1>
-        <p>اختر نقطة البداية والوجهة، ثم نقارن لك طرق المشي المتاحة.</p>
+    <form className="journey-planner" aria-labelledby="trip-title" onSubmit={handleSubmit}>
+      <header className="journey-planner__header">
+        <h1 id="trip-title">إلى أين تمشي؟</h1>
+        <p>اختر نقطتين داخل المدينة المنورة، وسنرتب لك طرق المشي المتاحة بوضوح.</p>
+      </header>
+
+      <div className="journey-points" aria-label="نقاط الرحلة">
+        <section className="journey-point journey-point--origin">
+          <span className="journey-point__marker" aria-hidden="true" />
+          <div className="journey-point__body">
+            <div className="journey-point__label">
+              <span>نقطة البداية</span>
+              <button
+                type="button"
+                className="journey-inline-action"
+                onClick={() => changeStartMode(startMode === "current" ? "search" : "current")}
+              >
+                {startMode === "current" ? "اختيار نقطة أخرى" : "استخدام موقعي"}
+              </button>
+            </div>
+
+            {startMode === "current" ? (
+              <button
+                type="button"
+                className={`journey-location-value ${currentLocationReady ? "is-ready" : ""} ${areaIssue === "current" ? "is-outside" : ""}`}
+                onClick={() => void useMyLocation()}
+                disabled={locating}
+              >
+                <LocateFixed size={18} />
+                <span>
+                  <strong>
+                    {locating
+                      ? "جاري تحديد موقعك…"
+                      : areaIssue === "current"
+                        ? "موقعك خارج نطاق التجربة"
+                        : currentLocationReady
+                          ? "موقعي الحالي"
+                          : "استخدم موقع هذا الجهاز"}
+                  </strong>
+                  <small>
+                    {areaIssue === "current"
+                      ? "اختر نقطة داخل المدينة المنورة للمتابعة"
+                      : currentLocationReady
+                        ? "تم تثبيت نقطة البداية من موقع الجهاز"
+                        : "لن يُستخدم موقعك إلا بعد موافقتك"}
+                  </small>
+                </span>
+              </button>
+            ) : (
+              <div className="journey-text-field">
+                <MapPin size={18} />
+                <input
+                  id="from"
+                  value={from}
+                  onChange={(event) => setFrom(event.target.value)}
+                  placeholder="اكتب نقطة البداية"
+                  autoComplete="off"
+                />
+              </div>
+            )}
+          </div>
+        </section>
+
+        <span className="journey-points__connector" aria-hidden="true" />
+
+        <section className="journey-point journey-point--destination">
+          <span className="journey-point__marker" aria-hidden="true" />
+          <div className="journey-point__body">
+            <div className="journey-point__label"><span>الوجهة</span></div>
+            <div className="journey-text-field">
+              <MapPin size={18} />
+              <input
+                id="to"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                placeholder="اكتب وجهتك"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
-      <section className="planner-section" aria-labelledby="start-title">
-        <div className="planner-section__heading">
-          <div>
-            <span className="planner-step">1</span>
-            <h2 id="start-title">من أين تبدأ؟</h2>
-          </div>
-        </div>
-
-        <div className="start-mode-control" role="group" aria-label="طريقة تحديد نقطة البداية">
-          <button type="button" className={startMode === "current" ? "is-selected" : ""} onClick={() => changeStartMode("current")}>
-            <LocateFixed size={17} /> موقعي الحالي
-          </button>
-          <button type="button" className={startMode === "search" ? "is-selected" : ""} onClick={() => changeStartMode("search")}>
-            <Search size={17} /> اختيار نقطة
-          </button>
-        </div>
-
-        {startMode === "current" ? (
-          <div className={`current-location-card ${currentLocationReady ? "is-ready" : ""} ${areaIssue === "current" ? "is-outside" : ""}`}>
-            <div className="current-location-card__icon"><LocateFixed size={21} /></div>
-            <div className="current-location-card__copy">
-              <strong>{areaIssue === "current" ? "موقعك الحالي خارج نطاق التجربة" : currentLocationReady ? "تم تحديد موقعك" : "استخدم موقع هذا الجهاز"}</strong>
-              <span>{areaIssue === "current" ? "التجربة الحالية مخصصة للمشي داخل المدينة المنورة." : currentLocationReady ? "سيكون هذا هو موضع البداية ولا يمكن تحريره كنص." : "لن نستخدم موقعك إلا بعد موافقتك."}</span>
-            </div>
-            <button type="button" className="location-action" onClick={() => void useMyLocation()} disabled={locating}>
-              {locating ? "جاري التحديد…" : currentLocation ? "تحديث" : "تحديد"}
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="planner-input planner-input--app">
-              <MapPin size={19} />
-              <input id="from" value={from} onChange={(event) => setFrom(event.target.value)} placeholder="اكتب نقطة بداية داخل المدينة" autoComplete="off" />
-            </div>
-            <div className="place-suggestions" aria-label="نقاط بداية مقترحة">
-              {madinahSuggestedPlaces.slice(0, 4).map((place) => (
-                <button key={place} type="button" onClick={() => setFrom(place)}>{place}</button>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="planner-section" aria-labelledby="destination-title">
-        <div className="planner-section__heading">
-          <div>
-            <span className="planner-step">2</span>
-            <h2 id="destination-title">إلى أين؟</h2>
-          </div>
-        </div>
-        <div className="planner-input planner-input--app">
-          <MapPin size={19} />
-          <input id="to" value={to} onChange={(event) => setTo(event.target.value)} placeholder="اكتب وجهتك" autoComplete="off" />
-        </div>
-        <div className="place-suggestions" aria-label="وجهات مقترحة">
+      <div className="journey-quick-places" aria-label="وجهات شائعة">
+        <span>وجهات شائعة</span>
+        <div>
           {madinahSuggestedPlaces.slice(0, 4).map((place) => (
-            <button key={place} type="button" className={to === place ? "is-selected" : ""} onClick={() => setTo(place)}>{place}</button>
+            <button
+              key={place}
+              type="button"
+              className={to === place ? "is-selected" : ""}
+              onClick={() => setTo(place)}
+            >
+              {place}
+            </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      <fieldset className="planner-field planner-field--compact">
-        <legend>وقت الانطلاق</legend>
-        <div className="time-options">
-          {departureOptions.map((option) => {
-            const available = option === "الآن";
+      <div className="journey-options-bar">
+        <div className="journey-option-static">
+          <span>الانطلاق</span>
+          <strong>الآن</strong>
+        </div>
+        <button
+          type="button"
+          className="journey-accessibility-toggle"
+          aria-expanded={showNeeds}
+          onClick={() => setShowNeeds((value) => !value)}
+        >
+          <span>
+            <strong>خيارات الوصول</strong>
+            <small>{needs.length ? `${needs.length} محددة` : "اختياري"}</small>
+          </span>
+          <ChevronDown size={16} className={showNeeds ? "is-open" : ""} />
+        </button>
+      </div>
+
+      {showNeeds && (
+        <div className="journey-accessibility-options" aria-label="خيارات الوصول">
+          {availablePreferences.map((item) => {
+            const selected = needs.includes(item.id);
             return (
-              <button key={option} type="button" className={time === option ? "is-selected" : ""} onClick={() => available && setTime(option)} disabled={!available}>
-                <Clock3 size={16} />{option}{!available && <small>قريبًا</small>}
+              <button
+                key={item.id}
+                type="button"
+                className={selected ? "is-selected" : ""}
+                aria-pressed={selected}
+                onClick={() => toggleNeed(item.id)}
+              >
+                <span className="journey-check">{selected && <Check size={13} />}</span>
+                <span><strong>{item.label}</strong><small>{item.description}</small></span>
               </button>
             );
           })}
         </div>
-      </fieldset>
-
-      <div className="planner-needs">
-        <button type="button" className="planner-needs__toggle" aria-expanded={showNeeds} onClick={() => setShowNeeds((value) => !value)}>
-          <span><SlidersHorizontal size={17} /> احتياجات الرحلة</span>
-          <span className="planner-needs__summary">{needs.length ? `${needs.length} محددة` : "اختياري"}<ChevronDown size={16} className={showNeeds ? "is-open" : ""} /></span>
-        </button>
-        {showNeeds && (
-          <div className="planner-needs__options" aria-label="تخصيص احتياجات الرحلة">
-            {travelPreferences.map((item) => {
-              const selected = needs.includes(item.id);
-              const available = activePreferences.has(item.id);
-              return (
-                <button key={item.id} type="button" className={`${selected ? "is-selected" : ""} ${!available ? "is-unavailable" : ""}`} aria-pressed={selected} onClick={() => toggleNeed(item.id)} disabled={!available}>
-                  <span className="planner-needs__check">{selected && <Check size={14} />}</span>
-                  <span><strong>{item.label}</strong><small>{available ? item.description : "ستتوفر عند اكتمال بيانات هذه الخاصية."}</small></span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      )}
 
       {areaIssue && (
-        <div className="service-area-card" role="alert">
-          <CircleAlert size={20} />
+        <div className="service-area-card journey-service-area" role="alert">
+          <CircleAlert size={19} />
           <div>
             <strong>{areaIssue === "destination" ? "الوجهة خارج نطاق التجربة" : "نقطة البداية خارج نطاق التجربة"}</strong>
-            <p>نطاق التجربة الحالي داخل المدينة المنورة. اختر مكانًا داخل المدينة للمتابعة.</p>
+            <p>التجربة الحالية مخصصة للمشي داخل المدينة المنورة.</p>
             {areaIssue !== "destination" && startMode === "current" && (
-              <button type="button" onClick={() => changeStartMode("search")}>اختيار نقطة بداية داخل المدينة</button>
+              <button type="button" onClick={() => changeStartMode("search")}>اختيار نقطة داخل المدينة</button>
             )}
           </div>
         </div>
@@ -289,9 +315,9 @@ export function TripPlanner() {
 
       {error && <div className="logic-error" role="alert">{error}</div>}
 
-      <button type="submit" className="primary-action planner-submit" disabled={planning || locating}>
-        <Navigation size={19} />
-        {planning ? "جاري تجهيز المسارات…" : "عرض مسارات المشي"}
+      <button type="submit" className="primary-action planner-submit journey-submit" disabled={planning || locating}>
+        <Navigation size={18} />
+        {planning ? "جاري تجهيز المسارات…" : "عرض المسارات"}
       </button>
     </form>
   );
