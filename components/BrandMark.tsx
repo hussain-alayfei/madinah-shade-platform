@@ -14,7 +14,6 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span className="brand-mark__text">
           <strong>ظل المدينة</strong>
-          <small>مسارات أريح للمشي</small>
         </span>
       )}
     </div>
