@@ -7,7 +7,7 @@ import { useState } from "react";
 import { BrandMark } from "./BrandMark";
 
 const links = [
-  { href: "/", label: "رحلتي", icon: Home },
+  { href: "/", label: "مشواري", icon: Home },
   { href: "/community", label: "المجتمع", icon: UsersRound },
   { href: "/report", label: "بلاغ", icon: Flag },
   { href: "/city", label: "المدينة", icon: Building2 },
