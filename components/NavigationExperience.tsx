@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchLiveRoutes,
   formatDistance,
+  formatDuration,
   haversineMeters,
   isWithinMadinahServiceArea,
   nearestRoutePoint,
@@ -158,9 +159,6 @@ export function NavigationExperience() {
           return;
         }
 
-        // A pedestrian route can snap to a nearby sidewalk or entrance rather than
-        // the raw GPS point. Treat a device still close to the captured trip origin
-        // as joined instead of showing a false "far from start" state.
         if (startDistance <= Math.max(105, accuracy * 2.2)) {
           setHasJoinedRoute(true);
           setStartContext(null);
@@ -248,7 +246,7 @@ export function NavigationExperience() {
             userPosition={userPosition}
             followUser={locationStatus === "tracking" && hasJoinedRoute && !startContext}
           />
-          <Link href={`/route?${tripQuery}&route=${requestedRouteId}`} className="nav-exit-button" aria-label="إغلاق الملاحة">
+          <Link href={`/plan?${tripQuery}`} className="nav-exit-button" aria-label="إغلاق الملاحة والعودة للمسارات">
             <X size={20} />
           </Link>
         </div>
@@ -304,7 +302,7 @@ export function NavigationExperience() {
 
             <div>
               <div className="nav-status">
-                <div><span>المتبقي</span><strong>{remainingMinutes} د</strong></div>
+                <div><span>المتبقي</span><strong>{formatDuration(remainingMinutes)}</strong></div>
                 <div><span>المسافة</span><strong>{formatDistance(remainingMeters)}</strong></div>
                 <div><span>الموقع</span><strong>{locationStatus === "tracking" ? "متصل" : "غير متصل"}</strong></div>
               </div>
