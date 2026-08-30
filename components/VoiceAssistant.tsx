@@ -98,6 +98,12 @@ function currentPosition() {
   });
 }
 
+function looksLikeGeolocationError(error: unknown) {
+  if (typeof error !== "object" || error === null || !("code" in error)) return false;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "number" && code >= 1 && code <= 3;
+}
+
 export function VoiceAssistant() {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -227,13 +233,11 @@ export function VoiceAssistant() {
       setStatus("تم، بفتح لك المسارات المناسبة");
       window.setTimeout(() => router.push(`/plan?${params.toString()}`), 500);
     } catch (error) {
-      const message =
-        error instanceof GeolocationPositionError ||
-        (typeof error === "object" && error !== null && "code" in error && "message" in error)
-          ? "ما قدرت أوصل لموقعك. فعّل إذن الموقع، أو افتح مشواري وحدد نقطة البداية يدويًا."
-          : error instanceof Error
-            ? error.message
-            : "تعذر تجهيز المشوار الآن.";
+      const message = looksLikeGeolocationError(error)
+        ? "ما قدرت أوصل لموقعك. فعّل إذن الموقع، أو افتح مشواري وحدد نقطة البداية يدويًا."
+        : error instanceof Error
+          ? error.message
+          : "تعذر تجهيز المشوار الآن.";
       addMessage("assistant", message);
       setStatus("احتاج منك خطوة بسيطة");
       speak(message);
@@ -451,7 +455,7 @@ export function VoiceAssistant() {
           </footer>
 
           <p className="voice-assistant-footnote">
-            نستخدم صوت سعودي إذا كان متوفر على جهازك، وإلا نختار أقرب صوت عربي. الذكاء الموسع راح يتفعل لاحقًا عند ربط الـAPI.
+            نستخدم صوت سعودي إذا كان متوفر على جهازك، وإلا نختار أقرب صوت عربي. التعرف الصوتي يعتمد على دعم وخدمة المتصفح، والذكاء الموسع راح يتفعل لاحقًا عند ربط الـAPI.
           </p>
         </div>
       </dialog>
