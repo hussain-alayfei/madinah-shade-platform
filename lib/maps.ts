@@ -204,6 +204,22 @@ export function nearestRoutePoint(coordinates: [number, number][], position: Lat
   return { index, distance };
 }
 
+export function formatDuration(minutes: number) {
+  const total = Math.max(0, Math.round(minutes));
+  if (total < 60) return `${total} د`;
+
+  const days = Math.floor(total / 1440);
+  const hours = Math.floor((total % 1440) / 60);
+  const mins = total % 60;
+  const parts: string[] = [];
+
+  if (days) parts.push(`${days} ${days === 1 ? "يوم" : "يوم"}`);
+  if (hours) parts.push(`${hours} س`);
+  if (mins && parts.length < 2) parts.push(`${mins} د`);
+
+  return parts.join(" ");
+}
+
 export function formatDistance(meters: number) {
   if (meters < 1000) return `${Math.max(0, Math.round(meters))} م`;
   return `${(meters / 1000).toFixed(meters >= 10_000 ? 0 : 1)} كم`;
