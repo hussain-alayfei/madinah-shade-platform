@@ -80,7 +80,11 @@ export default function CityDashboardPage() {
     setLoading(true);
     setError("");
 
-    fetch(`/api/city?period=${period}&layer=${activeLayer}`, { signal: controller.signal })
+    // Until intervention state lives in the shared database, request the full
+    // candidate set for this view and apply the locally saved status afterwards.
+    const apiLayer = activeLayer === "interventions" ? "overview" : activeLayer;
+
+    fetch(`/api/city?period=${period}&layer=${apiLayer}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("تعذر تحميل بيانات اللوحة الآن.");
         return (await response.json()) as { snapshot?: CityDashboardSnapshot };
@@ -100,14 +104,16 @@ export default function CityDashboardPage() {
     return () => controller.abort();
   }, [activeLayer, period, reloadToken]);
 
-  const signals = useMemo(
-    () =>
-      (snapshot?.signals || []).map((signal) => ({
-        ...signal,
-        interventionStatus: interventionOverrides[signal.id] || signal.interventionStatus,
-      })),
-    [snapshot, interventionOverrides],
-  );
+  const signals = useMemo(() => {
+    const merged = (snapshot?.signals || []).map((signal) => ({
+      ...signal,
+      interventionStatus: interventionOverrides[signal.id] || signal.interventionStatus,
+    }));
+
+    return activeLayer === "interventions"
+      ? merged.filter((signal) => signal.interventionStatus !== "not_started")
+      : merged;
+  }, [snapshot, interventionOverrides, activeLayer]);
 
   const metrics = useMemo(() => calculateCityMetrics(signals, period), [signals, period]);
 
