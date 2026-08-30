@@ -148,14 +148,28 @@ export function NavigationExperience() {
         setStartContext(null);
         setOffRoute(false);
         offRouteSamplesRef.current = 0;
-      } else if (originMode === "current" && !autoSyncStartedRef.current) {
+        return;
+      }
+
+      if (originMode === "current") {
         if (!isWithinMadinahServiceArea(userPosition)) {
           setStartContext("outside");
           setOffRoute(false);
           return;
         }
 
-        if (startDistance > Math.max(85, accuracy * 2)) {
+        // A pedestrian route can snap to a nearby sidewalk or entrance rather than
+        // the raw GPS point. Treat a device still close to the captured trip origin
+        // as joined instead of showing a false "far from start" state.
+        if (startDistance <= Math.max(105, accuracy * 2.2)) {
+          setHasJoinedRoute(true);
+          setStartContext(null);
+          setOffRoute(false);
+          offRouteSamplesRef.current = 0;
+          return;
+        }
+
+        if (!autoSyncStartedRef.current) {
           autoSyncStartedRef.current = true;
           void synchronizeFromCurrent();
           return;
@@ -164,14 +178,12 @@ export function NavigationExperience() {
         setStartContext("far");
         setOffRoute(false);
         return;
-      } else {
-        setStartContext(isWithinMadinahServiceArea(userPosition) ? "far" : "outside");
-        setOffRoute(false);
-        return;
       }
-    }
 
-    if (!hasJoinedRoute) return;
+      setStartContext(isWithinMadinahServiceArea(userPosition) ? "far" : "outside");
+      setOffRoute(false);
+      return;
+    }
 
     if (nearest.distance > offRouteTolerance) {
       offRouteSamplesRef.current += 1;
