@@ -1,43 +1,11 @@
 "use client";
 
 import { Check, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { communityReports } from "@/lib/data";
-
-export function CommunityReports() {
-  const [verified, setVerified] = useState<number[]>([]);
-
-  function toggle(id: number) {
-    setVerified((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
-  }
-
-  return (
-    <div className="report-list">
-      {communityReports.map((report) => {
-        const isVerified = verified.includes(report.id);
-        return (
-          <article className="report-row" key={report.id}>
-            <div>
-              <div className="report-row__meta">
-                <span className="status-tag">{report.category}</span>
-                <span>{report.status}</span>
-                <span>·</span>
-                <span>{report.time}</span>
-              </div>
-              <h3>{report.title}</h3>
-              <p><MapPin size={14} style={{ verticalAlign: "middle", marginLeft: 5 }} />{report.location}</p>
-            </div>
-
-            <button
-              type="button"
-              className={`verify-button ${isVerified ? "is-verified" : ""}`}
-              onClick={() => toggle(report.id)}
-            >
-              {isVerified ? <><Check size={15} /> تم التأكيد</> : `أؤكد · ${report.confirmations}`}
-            </button>
-          </article>
-        );
-      })}
-    </div>
-  );
+const REPORTS_KEY="madinah-shade-reports-v1";const VERIFICATIONS_KEY="madinah-shade-verifications-v1";
+type ReportView={id:string;category:string;title:string;location:string;time:string;confirmations:number;status:string;local?:boolean};type StoredReport={id:string;category:string;title:string;location:string;createdAt:string;confirmations:number;status:string;local:true};
+function relativeTime(iso:string){const minutes=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));if(minutes<1)return"الآن";if(minutes<60)return`منذ ${minutes} دقيقة`;return`منذ ${Math.round(minutes/60)} ساعة`;}
+export function CommunityReports(){const[localReports,setLocalReports]=useState<StoredReport[]>([]);const[verified,setVerified]=useState<string[]>([]);useEffect(()=>{try{setLocalReports(JSON.parse(window.localStorage.getItem(REPORTS_KEY)||"[]") as StoredReport[]);setVerified(JSON.parse(window.localStorage.getItem(VERIFICATIONS_KEY)||"[]") as string[]);}catch{setLocalReports([]);setVerified([]);}},[]);const reports=useMemo<ReportView[]>(()=>{const local=localReports.map((report)=>({id:report.id,category:report.category,title:report.title,location:report.location,time:relativeTime(report.createdAt),confirmations:report.confirmations,status:report.status,local:true}));const seeded=communityReports.map((report)=>({...report,id:`seed-${report.id}`,local:false}));return[...local,...seeded];},[localReports]);function toggle(id:string){setVerified((current)=>{const next=current.includes(id)?current.filter((item)=>item!==id):[...current,id];try{window.localStorage.setItem(VERIFICATIONS_KEY,JSON.stringify(next));}catch{}return next;});}
+return <><div className="community-local-note">التأكيدات التي تضيفها هنا تُحفظ على هذا الجهاز فقط إلى أن نربط المنصة بقاعدة بيانات مشتركة.</div><div className="report-list">{reports.map((report)=>{const isVerified=verified.includes(report.id);const visibleCount=report.confirmations+(isVerified?1:0);return <article className="report-row" key={report.id}><div><div className="report-row__meta"><span className="status-tag">{report.category}</span><span>{report.status}</span>{report.local&&<span className="status-tag status-tag--local">من جهازك</span>}<span>·</span><span>{report.time}</span></div><h3>{report.title}</h3><p><MapPin size={14} style={{verticalAlign:"middle",marginLeft:5}}/>{report.location}</p></div><button type="button" className={`verify-button ${isVerified?"is-verified":""}`} onClick={()=>toggle(report.id)} aria-pressed={isVerified}>{isVerified?<><Check size={15}/> تم التأكيد · {visibleCount}</>:`أؤكد · ${visibleCount}`}</button></article>;})}</div></>;
 }
