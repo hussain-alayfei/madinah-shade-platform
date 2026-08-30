@@ -64,9 +64,9 @@ export function TripPlanner() {
         (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
         (locationError) => {
           if (locationError.code === locationError.PERMISSION_DENIED) {
-            reject(new Error("فعّل إذن الموقع لهذا التطبيق ثم حاول مرة أخرى."));
+            reject(new Error("فعّل إذن الموقع للتطبيق ثم جرّب مرة ثانية."));
           } else {
-            reject(new Error("تعذر تحديد موقعك الآن. يمكنك اختيار نقطة بداية يدويًا."));
+            reject(new Error("تعذر تحديد موقعك الآن. تقدر تختار نقطة بداية يدويًا."));
           }
         },
         { enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 },
@@ -93,7 +93,7 @@ export function TripPlanner() {
     const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
     const payload = (await response.json().catch(() => null)) as { results?: GeocodeResult[]; error?: string } | null;
     if (!response.ok || !payload?.results?.[0]) {
-      throw new Error(payload?.error || `لم نجد موقعًا واضحًا باسم "${query}".`);
+      throw new Error(payload?.error || `ما لقينا موقعًا واضحًا باسم "${query}".`);
     }
     return payload.results[0];
   }
@@ -164,8 +164,8 @@ export function TripPlanner() {
   return (
     <form className="journey-planner" aria-labelledby="trip-title" onSubmit={handleSubmit}>
       <header className="journey-planner__header">
-        <h1 id="trip-title">إلى أين تمشي؟</h1>
-        <p>اختر نقطتين داخل المدينة المنورة، وسنرتب لك طرق المشي المتاحة بوضوح.</p>
+        <h1 id="trip-title">وين تبي تروح؟</h1>
+        <p>حدد البداية والوجهة، ونرتّب لك أنسب طرق المشي داخل المدينة.</p>
       </header>
 
       <div className="journey-points" aria-label="نقاط الرحلة">
@@ -173,13 +173,13 @@ export function TripPlanner() {
           <span className="journey-point__marker" aria-hidden="true" />
           <div className="journey-point__body">
             <div className="journey-point__label">
-              <span>نقطة البداية</span>
+              <span>من وين تبدأ؟</span>
               <button
                 type="button"
                 className="journey-inline-action"
                 onClick={() => changeStartMode(startMode === "current" ? "search" : "current")}
               >
-                {startMode === "current" ? "اختيار نقطة أخرى" : "استخدام موقعي"}
+                {startMode === "current" ? "اختر مكان ثاني" : "استخدم موقعي"}
               </button>
             </div>
 
@@ -194,19 +194,19 @@ export function TripPlanner() {
                 <span>
                   <strong>
                     {locating
-                      ? "جاري تحديد موقعك…"
+                      ? "نحدد موقعك…"
                       : areaIssue === "current"
                         ? "موقعك خارج نطاق التجربة"
                         : currentLocationReady
                           ? "موقعي الحالي"
-                          : "استخدم موقع هذا الجهاز"}
+                          : "حدد موقعي"}
                   </strong>
                   <small>
                     {areaIssue === "current"
                       ? "اختر نقطة داخل المدينة المنورة للمتابعة"
                       : currentLocationReady
-                        ? "تم تثبيت نقطة البداية من موقع الجهاز"
-                        : "لن يُستخدم موقعك إلا بعد موافقتك"}
+                        ? "اعتمدنا موقع جهازك كنقطة بداية"
+                        : "بنستخدم موقعك بعد موافقتك فقط"}
                   </small>
                 </span>
               </button>
@@ -230,7 +230,7 @@ export function TripPlanner() {
         <section className="journey-point journey-point--destination">
           <span className="journey-point__marker" aria-hidden="true" />
           <div className="journey-point__body">
-            <div className="journey-point__label"><span>الوجهة</span></div>
+            <div className="journey-point__label"><span>وين رايح؟</span></div>
             <div className="journey-text-field">
               <MapPin size={18} />
               <input
@@ -245,8 +245,8 @@ export function TripPlanner() {
         </section>
       </div>
 
-      <div className="journey-quick-places" aria-label="وجهات شائعة">
-        <span>وجهات شائعة</span>
+      <div className="journey-quick-places" aria-label="أماكن مقترحة">
+        <span>أماكن مقترحة</span>
         <div>
           {madinahSuggestedPlaces.slice(0, 4).map((place) => (
             <button
@@ -264,7 +264,7 @@ export function TripPlanner() {
       <div className="journey-options-bar">
         <div className="journey-option-static">
           <span>الانطلاق</span>
-          <strong>الآن</strong>
+          <strong>الحين</strong>
         </div>
         <button
           type="button"
@@ -273,7 +273,7 @@ export function TripPlanner() {
           onClick={() => setShowNeeds((value) => !value)}
         >
           <span>
-            <strong>خيارات الوصول</strong>
+            <strong>وش تحتاج في الطريق؟</strong>
             <small>{needs.length ? `${needs.length} محددة` : "اختياري"}</small>
           </span>
           <ChevronDown size={16} className={showNeeds ? "is-open" : ""} />
@@ -305,9 +305,9 @@ export function TripPlanner() {
           <CircleAlert size={19} />
           <div>
             <strong>{areaIssue === "destination" ? "الوجهة خارج نطاق التجربة" : "نقطة البداية خارج نطاق التجربة"}</strong>
-            <p>التجربة الحالية مخصصة للمشي داخل المدينة المنورة.</p>
+            <p>التجربة الحالية للمشي داخل المدينة المنورة. اختر نقطة داخل المدينة ونكمل.</p>
             {areaIssue !== "destination" && startMode === "current" && (
-              <button type="button" onClick={() => changeStartMode("search")}>اختيار نقطة داخل المدينة</button>
+              <button type="button" onClick={() => changeStartMode("search")}>اختر نقطة داخل المدينة</button>
             )}
           </div>
         </div>
@@ -317,7 +317,7 @@ export function TripPlanner() {
 
       <button type="submit" className="primary-action planner-submit journey-submit" disabled={planning || locating}>
         <Navigation size={18} />
-        {planning ? "جاري تجهيز المسارات…" : "عرض المسارات"}
+        {planning ? "نجهز لك المسارات…" : "شوف المسارات"}
       </button>
     </form>
   );
