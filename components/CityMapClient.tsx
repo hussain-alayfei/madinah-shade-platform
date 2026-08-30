@@ -1,5 +1,100 @@
 "use client";
+
 import "leaflet/dist/leaflet.css";
-import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
-const hotspots=[{center:[24.4706,39.6121] as [number,number],radius:95,label:"تعرض حراري مرتفع",type:"الإجهاد الحراري",color:"#9b6b27"},{center:[24.4693,39.6146] as [number,number],radius:80,label:"كثافة مشاة مرتفعة",type:"الازدحام",color:"#a54536"},{center:[24.4682,39.6118] as [number,number],radius:65,label:"ملاحظة إتاحة متكررة",type:"الإتاحة",color:"#8f6b3f"},{center:[24.4715,39.6151] as [number,number],radius:60,label:"نقص خدمات على المسار",type:"الخدمات",color:"#506a61"}];
-export function CityMapClient({activeLayer="نظرة عامة"}:{activeLayer?:string}){const visible=activeLayer==="نظرة عامة"||activeLayer==="الخريطة"||activeLayer==="البلاغات"||activeLayer==="التدخلات"?hotspots:hotspots.filter((spot)=>spot.type===activeLayer);return <MapContainer center={[24.4696,39.6135]} zoom={16} scrollWheelZoom className="route-map"><TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>{visible.map((spot)=><Circle key={spot.label} center={spot.center} radius={spot.radius} pathOptions={{color:spot.color,fillColor:spot.color,fillOpacity:.16,weight:2}}><Popup><strong>{spot.type}</strong><br/>{spot.label}<br/><small>طبقة لوحة المدينة تجريبية وليست بثًا حيًا.</small></Popup></Circle>)}<CircleMarker center={[24.46775,39.61645]} radius={7} pathOptions={{color:"#ffffff",fillColor:"#0f6b54",fillOpacity:1,weight:3}}><Popup>نقطة مرجعية للنطاق التجريبي</Popup></CircleMarker></MapContainer>;}
+import { latLngBounds } from "leaflet";
+import { useEffect } from "react";
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { categoryLabel, type CitySignal } from "@/lib/city-dashboard";
+
+const categoryColors: Record<CitySignal["category"], string> = {
+  heat: "#9b6b27",
+  crowding: "#a54536",
+  accessibility: "#8f6b3f",
+  services: "#506a61",
+};
+
+function CityViewportSync({ signals, selectedId }: { signals: CitySignal[]; selectedId?: string }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const selected = signals.find((signal) => signal.id === selectedId);
+    if (selected) {
+      map.flyTo(selected.coordinates, Math.max(map.getZoom(), 17), { duration: 0.55 });
+      return;
+    }
+
+    if (signals.length === 1) {
+      map.flyTo(signals[0].coordinates, 17, { duration: 0.45 });
+      return;
+    }
+
+    if (signals.length > 1) {
+      const bounds = latLngBounds(signals.map((signal) => signal.coordinates));
+      map.fitBounds(bounds.pad(0.28), { animate: true, duration: 0.45, maxZoom: 16 });
+    }
+  }, [map, selectedId, signals]);
+
+  return null;
+}
+
+export function CityMapClient({
+  signals,
+  selectedId,
+  onSelect,
+}: {
+  signals: CitySignal[];
+  selectedId?: string;
+  onSelect?: (id: string) => void;
+}) {
+  return (
+    <MapContainer
+      center={[24.4696, 39.6135]}
+      zoom={16}
+      scrollWheelZoom
+      className="route-map"
+      attributionControl
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+
+      <CityViewportSync signals={signals} selectedId={selectedId} />
+
+      {signals.map((signal) => {
+        const selected = signal.id === selectedId;
+        const color = categoryColors[signal.category];
+        return (
+          <Circle
+            key={signal.id}
+            center={signal.coordinates}
+            radius={signal.radiusMeters}
+            pathOptions={{
+              color,
+              fillColor: color,
+              fillOpacity: selected ? 0.25 : 0.13,
+              weight: selected ? 4 : 2,
+            }}
+            eventHandlers={{ click: () => onSelect?.(signal.id) }}
+          >
+            <Popup>
+              <strong>{signal.title}</strong>
+              <br />
+              {signal.location}
+              <br />
+              <small>{categoryLabel(signal.category)} · أولوية {signal.priorityScore}</small>
+            </Popup>
+          </Circle>
+        );
+      })}
+
+      <CircleMarker
+        center={[24.46775, 39.61645]}
+        radius={6}
+        pathOptions={{ color: "#ffffff", fillColor: "#0f6b54", fillOpacity: 1, weight: 3 }}
+      >
+        <Popup>نقطة مرجعية للنطاق التجريبي</Popup>
+      </CircleMarker>
+    </MapContainer>
+  );
+}
