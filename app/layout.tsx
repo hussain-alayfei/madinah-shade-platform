@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Almarai } from "next/font/google";
 import "./globals.css";
 import "./animations.css";
 import "./polish.css";
@@ -9,11 +9,12 @@ import "./live-maps.css";
 import "./mobile-app.css";
 import "./mobile-fixes.css";
 import "./map-first.css";
+import "./saudi-polish.css";
 import { AppHeader } from "@/components/AppHeader";
 
-const font = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
+const font = Almarai({
+  subsets: ["arabic"],
+  weight: ["300", "400", "700", "800"],
   display: "swap",
 });
 

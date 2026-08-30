@@ -225,29 +225,44 @@ export function MapClient({
         )}
       </MapContainer>
 
-      <div className="map-tools" aria-label="أدوات الخريطة">
-        <button type="button" onClick={() => runViewAction("center")} title={userPosition ? "العودة إلى موقعي" : "إعادة التوسيط"}>
-          <LocateFixed size={15} /><span>{userPosition ? "موقعي" : "توسيط"}</span>
-        </button>
-        {selectedRoute && (
-          <button type="button" onClick={() => runViewAction("fit")} title="إظهار المسار كاملًا">
-            <ScanLine size={15} /><span>المسار</span>
+      <div className="map-control-dock" aria-label="أدوات الخريطة">
+        <div className="map-control-group">
+          <button
+            type="button"
+            className="map-control-button"
+            onClick={() => runViewAction("center")}
+            aria-label={userPosition ? "الرجوع إلى موقعي" : "توسيط الخريطة"}
+            title={userPosition ? "موقعي" : "توسيط"}
+          >
+            <LocateFixed size={18} />
+            <span>{userPosition ? "موقعي" : "توسيط"}</span>
           </button>
-        )}
+
+          {selectedRoute && (
+            <button
+              type="button"
+              className="map-control-button"
+              onClick={() => runViewAction("fit")}
+              aria-label="عرض المسار كاملًا"
+              title="كل المسار"
+            >
+              <ScanLine size={18} />
+              <span>كل المسار</span>
+            </button>
+          )}
+        </div>
+
         <button
           type="button"
-          className={baseLayer === "aerial" ? "is-active" : ""}
+          className={`map-control-button map-layer-toggle ${baseLayer === "aerial" ? "is-active" : ""}`}
           onClick={() => setBaseLayer((current) => current === "standard" ? "aerial" : "standard")}
-          title="تغيير نمط الخريطة"
+          aria-label={baseLayer === "standard" ? "التبديل إلى العرض الجوي" : "التبديل إلى عرض الشوارع"}
+          aria-pressed={baseLayer === "aerial"}
+          title={baseLayer === "standard" ? "عرض جوي" : "شوارع"}
         >
-          <Layers3 size={15} /><span>{baseLayer === "standard" ? "عرض جوي" : "خريطة"}</span>
+          <Layers3 size={18} />
+          <span>{baseLayer === "standard" ? "جوي" : "شوارع"}</span>
         </button>
-      </div>
-
-      <div className="map-legend" aria-label="مفتاح الخريطة">
-        {selectedRoute && <span><i className="route" /> المسار المحدد</span>}
-        {userPosition && <span><i className="gps" /> موقعك المباشر</span>}
-        <span>{baseLayer === "aerial" ? "عرض جوي" : "خريطة"}</span>
       </div>
     </>
   );

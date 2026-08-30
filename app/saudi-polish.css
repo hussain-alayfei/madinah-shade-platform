@@ -1,0 +1,387 @@
+/* Saudi localization + map control polish.
+   Loaded last so it can refine the product without rewriting older layout layers. */
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.journey-planner__header h1,
+.route-sheet-header h1,
+.nav-instruction h1,
+.page-title h1 {
+  letter-spacing: -0.018em;
+}
+
+.journey-planner__header h1 {
+  font-weight: 800;
+}
+
+.brand-mark__text strong,
+.route-sheet-header h1,
+.route-map-trip strong {
+  font-weight: 700;
+}
+
+/* ---------- Compact map control dock ---------- */
+.map-control-dock {
+  position: absolute;
+  z-index: 780;
+  left: 18px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+  pointer-events: auto;
+}
+
+.map-control-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid rgba(20, 50, 42, 0.13);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 18px rgba(18, 43, 35, 0.11);
+  backdrop-filter: blur(12px);
+}
+
+.map-control-button {
+  min-width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  background: transparent;
+  color: #29483f;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 130ms ease, color 130ms ease;
+}
+
+.map-control-button:hover {
+  background: rgba(23, 77, 64, 0.07);
+  color: #103f35;
+}
+
+.map-control-button:focus-visible {
+  outline: 2px solid rgba(15, 107, 84, 0.35);
+  outline-offset: 2px;
+}
+
+.map-control-button svg {
+  flex: 0 0 auto;
+}
+
+.map-layer-toggle {
+  border: 1px solid rgba(20, 50, 42, 0.13);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 18px rgba(18, 43, 35, 0.11);
+  backdrop-filter: blur(12px);
+}
+
+.map-layer-toggle.is-active {
+  background: #173b32;
+  color: #fff;
+}
+
+.route-map-screen .map-control-dock,
+.navigation-shell .map-control-dock {
+  top: 88px;
+  bottom: auto;
+}
+
+/* Old map UI is intentionally retired. */
+.map-tools,
+.map-legend {
+  display: none !important;
+}
+
+/* ---------- Cleaner immersive route picker ---------- */
+.route-map-toolbar {
+  border-color: rgba(20, 50, 42, 0.11);
+  box-shadow: 0 5px 20px rgba(18, 43, 35, 0.10);
+}
+
+.route-map-back,
+.route-map-edit {
+  transition: background-color 130ms ease;
+}
+
+.route-map-back:hover,
+.route-map-edit:hover {
+  background: rgba(23, 77, 64, 0.055);
+}
+
+.route-picker-sheet {
+  border-color: rgba(20, 50, 42, 0.11);
+}
+
+.route-choice {
+  box-shadow: none;
+}
+
+.route-choice.is-selected {
+  transform: none;
+}
+
+.route-start-button {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  /* The map is gesture-first on phones; remove redundant +/- chrome. */
+  .route-map-screen .leaflet-control-zoom,
+  .navigation-shell .leaflet-control-zoom {
+    display: none !important;
+  }
+
+  .route-map-screen .map-control-dock,
+  .navigation-shell .map-control-dock {
+    top: calc(72px + env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    bottom: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+  }
+
+  .map-control-group {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .map-control-group .map-control-button {
+    border-radius: 0;
+    border-bottom: 1px solid rgba(20, 50, 42, 0.09);
+  }
+
+  .map-control-group .map-control-button:last-child {
+    border-bottom: 0;
+  }
+
+  .map-control-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .map-control-button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .map-layer-toggle {
+    border-radius: 12px;
+  }
+
+  .route-map-toolbar {
+    top: max(10px, env(safe-area-inset-top));
+    width: calc(100% - 20px);
+    min-height: 54px;
+    grid-template-columns: 40px minmax(0, 1fr) 42px;
+    gap: 7px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .route-map-back {
+    width: 40px;
+    height: 40px;
+  }
+
+  .route-map-edit {
+    padding: 7px 5px;
+    text-align: center;
+  }
+
+  .route-map-trip span {
+    font-size: 9px;
+  }
+
+  .route-map-trip strong {
+    font-size: 12px;
+  }
+
+  .route-picker-sheet {
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: calc(100% - 16px);
+    transform: none;
+    padding: 11px 11px 12px;
+    border-radius: 18px;
+    box-shadow: 0 12px 38px rgba(17, 40, 33, 0.17);
+    backdrop-filter: blur(16px) saturate(1.08);
+  }
+
+  .route-sheet-handle {
+    display: block;
+    width: 34px;
+    height: 4px;
+    margin: -2px auto 9px;
+    border-radius: 999px;
+    background: #c9cdca;
+  }
+
+  .route-sheet-header {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 9px;
+  }
+
+  .route-sheet-header h1 {
+    margin-bottom: 1px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .route-sheet-header p {
+    font-size: 9px;
+  }
+
+  .route-sheet-primary-stat strong {
+    font-size: 18px;
+  }
+
+  .route-switcher {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid rgba(23, 59, 50, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .route-choice {
+    min-height: 52px;
+    grid-template-columns: 3px minmax(0, 1fr);
+    gap: 7px;
+    border: 0;
+    border-left: 1px solid rgba(23, 59, 50, 0.09);
+    border-radius: 0;
+    padding: 6px 7px;
+    background: transparent;
+  }
+
+  .route-choice:last-child {
+    border-left: 0;
+  }
+
+  .route-choice.is-selected {
+    background: #fff;
+    box-shadow: inset 0 -2px 0 #174d40;
+  }
+
+  .route-choice__line {
+    height: 26px;
+    width: 3px;
+  }
+
+  .route-choice__copy strong {
+    font-size: 10px;
+  }
+
+  .route-choice__copy small {
+    font-size: 8px;
+  }
+
+  .route-selected-summary {
+    min-height: 0;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .route-selected-summary strong {
+    font-size: 10px;
+  }
+
+  .route-selected-summary span {
+    display: none;
+  }
+
+  .route-sheet-actions {
+    margin-top: 9px;
+    gap: 7px;
+  }
+
+  .route-details-link,
+  .route-start-button {
+    min-height: 46px;
+    border-radius: 11px;
+  }
+
+  .route-details-link {
+    font-size: 11px;
+  }
+
+  .route-start-button {
+    font-size: 12px;
+  }
+
+  /* Keep legal attribution readable but visually secondary. */
+  .leaflet-control-attribution {
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+    max-width: 68vw;
+    opacity: 0.78;
+  }
+
+  /* Almarai is slightly wider than the previous font; tighten only where space is precious. */
+  .mobile-tabbar a {
+    font-size: 8.5px;
+  }
+
+  .journey-planner__header h1 {
+    font-size: clamp(27px, 8vw, 32px);
+    line-height: 1.3;
+  }
+
+  .journey-planner__header p {
+    max-width: 330px;
+    font-size: 11.5px;
+  }
+
+  .journey-point__label,
+  .journey-inline-action,
+  .journey-quick-places > span {
+    font-size: 9.5px;
+  }
+
+  .journey-location-value strong,
+  .journey-text-field input {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .route-picker-sheet {
+    padding-inline: 9px;
+  }
+
+  .route-choice {
+    padding-inline: 5px;
+  }
+
+  .route-choice__copy small {
+    font-size: 7.5px;
+  }
+}
