@@ -14,7 +14,9 @@ import "./premium-rtl.css";
 import "./status-messages.css";
 import "./navigation-ux.css";
 import "./voice-assistant.css";
+import "./realtime-voice.css";
 import { AppHeader } from "@/components/AppHeader";
+import { RealtimeVoiceAssistant } from "@/components/RealtimeVoiceAssistant";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 const font = Almarai({
@@ -45,12 +47,14 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const realtimeVoiceConfigured = Boolean(process.env.OPENAI_API_KEY);
+
   return (
     <html lang="ar" dir="rtl">
       <body className={font.className}>
         <AppHeader />
         {children}
-        <VoiceAssistant />
+        {realtimeVoiceConfigured ? <RealtimeVoiceAssistant /> : <VoiceAssistant />}
       </body>
     </html>
   );
