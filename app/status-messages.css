@@ -92,6 +92,42 @@
   text-align: right;
 }
 
+/* Service-area feedback uses the same editorial pattern instead of another card. */
+.service-area-card {
+  border: 0 !important;
+  border-inline-start: 2px solid #a27634 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 10px 0 10px 12px !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.service-area-card strong {
+  color: #394942;
+  font-size: 13px;
+}
+
+.service-area-card p {
+  margin: 3px 0 7px;
+  color: #707973;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.service-area-card button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d1d9d5;
+  border-radius: 6px;
+  background: #fff;
+  color: #245347;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* Navigation notices should read as contextual state, not floating cards. */
 .nav-start-context,
 .gps-permission-card,
@@ -102,6 +138,8 @@
   border: 0 !important;
   border-inline-start: 2px solid #a27634 !important;
   padding: 10px 0 10px 12px !important;
+  direction: rtl;
+  text-align: right;
 }
 
 .gps-permission-card {
@@ -110,6 +148,21 @@
 
 .nav-decision {
   border-inline-start-color: #a84a3b !important;
+}
+
+.nav-start-context__copy strong,
+.nav-decision__copy strong,
+.gps-permission-card strong {
+  color: #34453e;
+  font-size: 13px;
+}
+
+.nav-start-context__copy span,
+.nav-decision__copy span,
+.gps-permission-card span {
+  color: #6c756f;
+  font-size: 11px;
+  line-height: 1.65;
 }
 
 @media (max-width: 640px) {
@@ -128,5 +181,12 @@
   .status-message__action a {
     min-height: 34px;
     padding-inline: 9px;
+  }
+
+  .service-area-card,
+  .nav-start-context,
+  .gps-permission-card,
+  .nav-decision {
+    padding-block: 9px !important;
   }
 }
