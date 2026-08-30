@@ -31,6 +31,8 @@ export type LiveRoute = {
   source: string;
 };
 
+export type TripOriginMode = "current" | "selected";
+
 export type LiveTrip = {
   origin: LatLng;
   destination: LatLng;
@@ -38,6 +40,7 @@ export type LiveTrip = {
   destinationLabel: string;
   time: string;
   needs: PreferenceId[];
+  originMode?: TripOriginMode;
 };
 
 export const MADINAH_CENTER: LatLng = { lat: 24.4672, lon: 39.6112 };
@@ -69,14 +72,23 @@ export function parseLiveTrip(params: SearchParamsLike): LiveTrip | null {
   const needs = (needsValue ? needsValue.split(",") : []).filter((item): item is PreferenceId =>
     allowed.has(item as PreferenceId),
   );
+  const originLabel = params.get("fromLabel") || "نقطة البداية";
+  const modeParam = params.get("originMode");
+  const originMode: TripOriginMode =
+    modeParam === "current" || modeParam === "selected"
+      ? modeParam
+      : originLabel === "موقعي الحالي"
+        ? "current"
+        : "selected";
 
   return {
     origin: { lat: fromLat, lon: fromLon },
     destination: { lat: toLat, lon: toLon },
-    originLabel: params.get("fromLabel") || "نقطة البداية",
+    originLabel,
     destinationLabel: params.get("toLabel") || "الوجهة",
     time: params.get("time") || "الآن",
     needs,
+    originMode,
   };
 }
 
@@ -89,6 +101,7 @@ export function tripToSearchParams(trip: LiveTrip) {
     fromLabel: trip.originLabel,
     toLabel: trip.destinationLabel,
     time: trip.time,
+    originMode: trip.originMode || (trip.originLabel === "موقعي الحالي" ? "current" : "selected"),
   });
 
   if (trip.needs.length) params.set("needs", trip.needs.join(","));

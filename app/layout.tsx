@@ -8,6 +8,7 @@ import "./enhancements.css";
 import "./live-maps.css";
 import "./mobile-app.css";
 import "./mobile-fixes.css";
+import "./map-first.css";
 import { AppHeader } from "@/components/AppHeader";
 
 const font = IBM_Plex_Sans_Arabic({
