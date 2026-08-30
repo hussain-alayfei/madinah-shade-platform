@@ -187,38 +187,92 @@
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
+  .layout {
+    min-height: calc(100dvh - var(--header-height));
+    padding-bottom: calc(var(--mobile-tab-height, 66px) + env(safe-area-inset-bottom));
+    background: #e9ece8;
+  }
+
   .map,
   .map :global(.map-frame),
   .map :global(.route-map) {
-    min-height: clamp(260px, 36dvh, 330px);
+    min-height: clamp(245px, 34dvh, 315px);
+    height: clamp(245px, 34dvh, 315px);
   }
 
   .details {
-    padding: 0 16px;
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    margin-top: -20px;
+    padding: 18px 14px 0;
+    border-radius: 22px 22px 0 0;
+    background: #f8f6f1;
+    box-shadow: 0 -8px 26px rgba(25, 47, 40, 0.08);
+  }
+
+  .details::before {
+    content: "";
+    display: block;
+    width: 34px;
+    height: 4px;
+    margin: -7px auto 12px;
+    border-radius: 999px;
+    background: #d3d0c9;
+  }
+
+  .back {
+    margin: 0 0 12px;
   }
 
   .details h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
-  .summary strong {
-    font-size: 14px;
+  .description {
+    margin-bottom: 14px;
+    font-size: 11px;
+    line-height: 1.65;
+  }
+
+  .summary {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: #fff;
   }
 
   .summary div,
   .summary div:nth-child(2),
   .summary div:nth-child(3) {
-    padding: 12px 8px;
+    padding: 11px 9px;
+  }
+
+  .summary strong {
+    font-size: 13px;
   }
 
   .section {
-    padding-block: 18px;
+    padding-block: 16px;
+  }
+
+  .fact {
+    min-height: 38px;
+    font-size: 11px;
   }
 
   .actions {
-    margin-inline: -16px;
-    padding-inline: 16px;
+    bottom: calc(var(--mobile-tab-height, 66px) + env(safe-area-inset-bottom));
+    margin-inline: -14px;
+    padding: 10px 14px 12px;
+    background: linear-gradient(to top, #f8f6f1 82%, rgba(248, 246, 241, 0));
+  }
+
+  .actions :global(.primary-action) {
+    min-height: 52px;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(10, 72, 56, 0.17);
   }
 }
 

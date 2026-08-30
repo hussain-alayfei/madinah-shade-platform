@@ -40,6 +40,17 @@ export type LiveTrip = {
   needs: PreferenceId[];
 };
 
+export const MADINAH_CENTER: LatLng = { lat: 24.4672, lon: 39.6112 };
+export const MADINAH_SERVICE_RADIUS_METERS = 35_000;
+
+export const madinahSuggestedPlaces = [
+  "المسجد النبوي",
+  "مسجد قباء",
+  "مسجد القبلتين",
+  "جبل أحد",
+  "محطة قطار الحرمين المدينة المنورة",
+] as const;
+
 type SearchParamsLike = {
   get(name: string): string | null;
 };
@@ -92,11 +103,13 @@ export async function fetchLiveRoutes(trip: Pick<LiveTrip, "origin" | "destinati
   });
 
   const payload = (await response.json().catch(() => null)) as
-    | { routes?: LiveRoute[]; error?: string }
+    | { routes?: LiveRoute[]; error?: string; code?: string }
     | null;
 
   if (!response.ok || !payload?.routes?.length) {
-    throw new Error(payload?.error || "تعذر حساب مسار المشي الآن.");
+    const error = new Error(payload?.error || "تعذر حساب مسار المشي الآن.") as Error & { code?: string };
+    error.code = payload?.code;
+    throw error;
   }
 
   return payload.routes;
@@ -115,6 +128,10 @@ export function haversineMeters(a: LatLng, b: LatLng) {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
   return 2 * radius * Math.asin(Math.sqrt(h));
+}
+
+export function isWithinMadinahServiceArea(point: LatLng) {
+  return haversineMeters(MADINAH_CENTER, point) <= MADINAH_SERVICE_RADIUS_METERS;
 }
 
 export function nearestRoutePoint(coordinates: [number, number][], position: LatLng) {
