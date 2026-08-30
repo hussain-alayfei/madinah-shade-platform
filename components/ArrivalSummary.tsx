@@ -1,10 +1,64 @@
 "use client";
+
 import Link from "next/link";
 import { CheckCircle2, Flag, MessageSquareText, Route, Timer } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { formatDistance } from "@/lib/maps";
+import { formatDistance, formatDuration } from "@/lib/maps";
 import styles from "./ArrivalSummary.module.css";
-const RATINGS_KEY="madinah-shade-ratings-v1";
-export function ArrivalSummary(){const params=useSearchParams();const routeName=params.get("routeName")||"مسار المشي";const destination=params.get("destination")||"الوجهة";const duration=Math.max(0,Number(params.get("duration"))||0);const distance=Math.max(0,Number(params.get("distance"))||0);const[rating,setRating]=useState<number|null>(null);function chooseRating(value:number){setRating(value);try{const existing=JSON.parse(window.localStorage.getItem(RATINGS_KEY)||"[]") as unknown[];window.localStorage.setItem(RATINGS_KEY,JSON.stringify([{value,routeName,destination,duration,distance,createdAt:new Date().toISOString()},...existing].slice(0,50)));}catch{}}
-return <main className="content-shell content-shell--narrow"><div className="page-title"><CheckCircle2 size={34} color="#0f6b54"/><h1>وصلت إلى {destination}</h1><p>هذا الملخص يستخدم زمن ومسافة المسار الذي اتبعته في جلسة الملاحة الحالية.</p></div><section className={styles.summary} aria-label="ملخص الرحلة"><div className={styles.stat}><Timer size={19}/><span>المدة المخططة</span><strong>{duration} دقيقة</strong></div><div className={styles.stat}><Route size={19}/><span>المسافة</span><strong>{formatDistance(distance)}</strong></div><div className={styles.stat}><Flag size={19}/><span>المسار</span><strong>{routeName}</strong></div></section><section className={styles.feedback}><h2>كيف كانت الرحلة؟</h2><p>تقييمك يُحفظ على جهازك في هذه النسخة، إلى أن نربط التقييمات بقاعدة بيانات مشتركة.</p><div className={styles.rating} role="group" aria-label="تقييم الرحلة">{[[1,"مرهقة"],[2,"دون المتوقع"],[3,"مقبولة"],[4,"مريحة"],[5,"مريحة جدًا"]].map(([value,label])=><button key={value} type="button" className={rating===value?styles.selected:""} onClick={()=>chooseRating(value as number)}><strong>{value}</strong><span>{label}</span></button>)}</div>{rating&&<div className="notice" style={{marginTop:16}}>تم حفظ تقييمك على هذا الجهاز.</div>}</section><div className="form-actions"><Link href="/" className="primary-action">رحلة جديدة</Link><Link href="/report" className="secondary-action"><MessageSquareText size={17}/>الإبلاغ عن ملاحظة</Link></div></main>;}
+
+const RATINGS_KEY = "madinah-shade-ratings-v1";
+
+export function ArrivalSummary() {
+  const params = useSearchParams();
+  const routeName = params.get("routeName") || "مسار المشي";
+  const destination = params.get("destination") || "الوجهة";
+  const duration = Math.max(0, Number(params.get("duration")) || 0);
+  const distance = Math.max(0, Number(params.get("distance")) || 0);
+  const [rating, setRating] = useState<number | null>(null);
+
+  function chooseRating(value: number) {
+    setRating(value);
+    try {
+      const existing = JSON.parse(window.localStorage.getItem(RATINGS_KEY) || "[]") as unknown[];
+      window.localStorage.setItem(
+        RATINGS_KEY,
+        JSON.stringify([{ value, routeName, destination, duration, distance, createdAt: new Date().toISOString() }, ...existing].slice(0, 50)),
+      );
+    } catch {}
+  }
+
+  return (
+    <main className="content-shell content-shell--narrow">
+      <div className="page-title">
+        <CheckCircle2 size={34} color="#0f6b54" />
+        <h1>وصلت إلى {destination}</h1>
+        <p>هذا ملخص الرحلة التي اتبعتها في جلسة الملاحة الحالية.</p>
+      </div>
+
+      <section className={styles.summary} aria-label="ملخص الرحلة">
+        <div className={styles.stat}><Timer size={19} /><span>المدة المخططة</span><strong>{formatDuration(duration)}</strong></div>
+        <div className={styles.stat}><Route size={19} /><span>المسافة</span><strong>{formatDistance(distance)}</strong></div>
+        <div className={styles.stat}><Flag size={19} /><span>المسار</span><strong>{routeName}</strong></div>
+      </section>
+
+      <section className={styles.feedback}>
+        <h2>كيف كانت الرحلة؟</h2>
+        <p>تقييمك يُحفظ على جهازك في هذه النسخة، إلى أن نربط التقييمات بقاعدة بيانات مشتركة.</p>
+        <div className={styles.rating} role="group" aria-label="تقييم الرحلة">
+          {[[1, "مرهقة"], [2, "دون المتوقع"], [3, "مقبولة"], [4, "مريحة"], [5, "مريحة جدًا"]].map(([value, label]) => (
+            <button key={value} type="button" className={rating === value ? styles.selected : ""} onClick={() => chooseRating(value as number)}>
+              <strong>{value}</strong><span>{label}</span>
+            </button>
+          ))}
+        </div>
+        {rating && <div className="notice" style={{ marginTop: 16 }}>تم حفظ تقييمك على هذا الجهاز.</div>}
+      </section>
+
+      <div className="form-actions">
+        <Link href="/" className="primary-action">رحلة جديدة</Link>
+        <Link href="/report" className="secondary-action"><MessageSquareText size={17} />الإبلاغ عن ملاحظة</Link>
+      </div>
+    </main>
+  );
+}
