@@ -1,0 +1,349 @@
+.realtime-voice-launcher {
+  position: fixed;
+  z-index: 1200;
+  left: 22px;
+  bottom: 22px;
+  min-height: 58px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px 0 14px;
+  border: 1px solid #0f5b49;
+  border-radius: 999px;
+  background: #174d40;
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(16, 47, 40, 0.18);
+  font: inherit;
+  cursor: pointer;
+}
+
+.realtime-voice-launcher span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+}
+
+.realtime-voice-launcher:focus-visible,
+.realtime-voice-dialog button:focus-visible,
+.realtime-voice-dialog input:focus-visible {
+  outline: 3px solid #d7b677;
+  outline-offset: 3px;
+}
+
+.realtime-voice-dialog {
+  width: min(620px, calc(100% - 32px));
+  max-height: min(780px, calc(100dvh - 32px));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #ccd5d0;
+  border-radius: 18px;
+  background: #fbfaf7;
+  color: #17241f;
+  box-shadow: 0 28px 70px rgba(16,47,40,.25);
+}
+
+.realtime-voice-dialog::backdrop {
+  background: rgba(12, 25, 21, .52);
+}
+
+.realtime-voice-shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(180px, 1fr) auto auto auto;
+  max-height: min(780px, calc(100dvh - 32px));
+}
+
+.realtime-voice-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 22px 17px;
+  border-bottom: 1px solid #dfe4e0;
+}
+
+.realtime-voice-header h2 {
+  margin: 5px 0 5px;
+  color: #173b32;
+  font-size: 22px;
+  line-height: 1.45;
+}
+
+.realtime-voice-header p {
+  margin: 0;
+  color: #65706a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.realtime-voice-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f6b54;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.realtime-voice-close {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d5dcd8;
+  border-radius: 50%;
+  background: #fff;
+  color: #425149;
+  cursor: pointer;
+}
+
+.realtime-voice-status {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 22px;
+  border-bottom: 1px solid #e3e7e4;
+  color: #53615a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.realtime-voice-status > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9aa49e;
+}
+
+.realtime-voice-status > span.is-live {
+  background: #176749;
+  box-shadow: 0 0 0 5px rgba(23,103,73,.12);
+}
+
+.realtime-voice-transcript {
+  min-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px;
+  background: #fff;
+}
+
+.realtime-message {
+  max-width: 88%;
+  padding: 11px 13px;
+  border: 1px solid #e0e5e1;
+  border-radius: 12px;
+  background: #fbfaf7;
+}
+
+.realtime-message--assistant {
+  align-self: flex-start;
+}
+
+.realtime-message--user {
+  align-self: flex-end;
+  background: #eef5f1;
+  border-color: #d5e3dc;
+}
+
+.realtime-message strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #5e6a64;
+  font-size: 10px;
+}
+
+.realtime-message p {
+  margin: 0;
+  color: #263a32;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.realtime-voice-primary {
+  padding: 16px 22px 8px;
+  background: #fbfaf7;
+}
+
+.realtime-start {
+  width: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #174d40;
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.realtime-start:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
+.realtime-live-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.realtime-live-controls button {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #cfd8d2;
+  border-radius: 10px;
+  background: #fff;
+  color: #29433a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.realtime-live-controls button.is-danger {
+  border-color: #d9c3bd;
+  color: #8f3f31;
+}
+
+.realtime-voice-form {
+  padding: 10px 22px 16px;
+  background: #fbfaf7;
+}
+
+.realtime-voice-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: #68736d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.realtime-voice-form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px;
+}
+
+.realtime-voice-form input {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 13px;
+  border: 1px solid #cfd8d2;
+  border-radius: 9px;
+  background: #fff;
+  color: #21372e;
+  font: inherit;
+  font-size: 14px;
+}
+
+.realtime-voice-form button {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: #174d40;
+  color: #fff;
+  cursor: pointer;
+}
+
+.realtime-voice-form button:disabled,
+.realtime-voice-form input:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+}
+
+.realtime-voice-footnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 22px 16px;
+  border-top: 1px solid #e0e5e1;
+  color: #6c7671;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .realtime-voice-launcher {
+    left: 14px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    min-height: 54px;
+    padding-inline: 12px 15px;
+  }
+
+  .realtime-voice-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .realtime-voice-shell {
+    max-height: 88dvh;
+  }
+
+  .realtime-voice-header {
+    padding: 18px 16px 14px;
+  }
+
+  .realtime-voice-header h2 {
+    font-size: 20px;
+  }
+
+  .realtime-voice-status,
+  .realtime-voice-transcript,
+  .realtime-voice-primary,
+  .realtime-voice-form,
+  .realtime-voice-footnote {
+    padding-inline: 16px;
+  }
+
+  .realtime-message {
+    max-width: 94%;
+  }
+
+  .realtime-message p {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  .realtime-voice-launcher strong {
+    display: none;
+  }
+
+  .realtime-voice-launcher {
+    width: 58px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .realtime-live-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .realtime-voice-launcher,
+  .realtime-voice-dialog * {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
