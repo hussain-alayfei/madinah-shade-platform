@@ -150,7 +150,7 @@ export function tripToSearchParams(trip: LiveTrip) {
 }
 
 export async function fetchLiveRoutes(trip: Pick<LiveTrip, "origin" | "destination" | "needs">) {
-  const response = await fetch("/api/route-resilient", {
+  const response = await fetch("/api/route", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(trip),
