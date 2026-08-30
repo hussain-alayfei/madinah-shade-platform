@@ -5,19 +5,16 @@ import { CommunityReports } from "@/components/CommunityReports";
 export default function CommunityPage() {
   return (
     <main className="content-shell">
-      <div className="city-topline">
+      <div className="city-topline community-topline">
         <div className="page-title" style={{ marginBottom: 0 }}>
           <h1>ملاحظات المجتمع</h1>
-          <p>تجارب المشاة تساعد في كشف تغيرات المسار التي لا تظهر دائمًا في البيانات الرسمية.</p>
+          <p>ملاحظات المشاة تساعدنا نرصد التغيّرات اللي ما تظهر دائمًا في البيانات الرسمية.</p>
+          <p className="community-guidance"><strong>عن التأكيد:</strong> استخدمه فقط إذا شفت الحالة بنفسك مؤخرًا.</p>
         </div>
-        <Link href="/report" className="secondary-action">
+        <Link href="/report" className="secondary-action community-add-action">
           <Plus size={17} />
           إضافة ملاحظة
         </Link>
-      </div>
-
-      <div className="notice" style={{ marginBottom: 24 }}>
-        التأكيد يعني أنك لاحظت الحالة نفسها مؤخرًا. لا تستخدمه للتصويت على أهمية المشكلة.
       </div>
 
       <CommunityReports />
