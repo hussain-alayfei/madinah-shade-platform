@@ -1,0 +1,39 @@
+.logic-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+.nav-exit-button {
+  position: absolute;
+  z-index: 650;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(24, 51, 43, 0.09);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #173e35;
+  box-shadow: 0 5px 18px rgba(18, 37, 31, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+@media (max-width: 640px) {
+  .logic-error__actions {
+    width: 100%;
+    margin-inline-start: 0;
+  }
+
+  .logic-error__actions .secondary-action {
+    flex: 1 1 130px;
+    justify-content: center;
+  }
+
+  .navigation-map .map-tools {
+    top: calc(max(12px, env(safe-area-inset-top)) + 52px);
+  }
+}
