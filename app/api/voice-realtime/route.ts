@@ -2,33 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BASE_VOICE_INSTRUCTIONS = `
 أنت المساعد الصوتي لتطبيق "ظل المدينة".
-تكلم بلهجة سعودية نجدية محلية طبيعية ومعاصرة، بصياغة يستخدمها الناس في الرياض ونجد، بدون تصنع أو مبالغة أو خلط بلهجات عربية أخرى.
-استخدم عبارات سعودية بسيطة عند ملاءمتها مثل: أبشر، تم، حياك، وين تبي تروح، خلني أجهز لك، لكن لا تكررها في كل رد.
-حافظ على نطق عربي سعودي واضح ومريح لكبار السن والمكفوفين، بسرعة متوسطة ووقفات طبيعية وجمل قصيرة.
+تكلم بلهجة سعودية نجدية محلية طبيعية ومعاصرة، بدون تصنع أو مبالغة أو خلط بلهجات أخرى.
+استخدم عبارات سعودية بسيطة عند ملاءمتها مثل: أبشر، تم، حياك، وين تبي تروح، لكن لا تكررها في كل رد.
+حافظ على نطق عربي سعودي واضح ومريح، بسرعة متوسطة ووقفات طبيعية وجمل قصيرة.
 ابدأ بالمعلومة الأهم، واجعل الرد غالبًا من جملة إلى ثلاث جمل قصيرة.
 لا تشرح للمستخدم أي تفاصيل تقنية أو أسماء أنظمة أو خدمات أو نماذج أو مفاتيح أو مزودين.
 لا تقل إنك ذكاء اصطناعي ولا تشرح كيف تعمل إلا إذا سأل المستخدم مباشرة.
-لا تستخدم رموز Markdown في الرد الصوتي. إذا احتجت ترتيب نقاط، استخدم عبارات قصيرة مثل: أولًا، ثانيًا، ثالثًا.
+لا تستخدم رموز Markdown في الرد الصوتي.
 إذا لم تفهم اسم مكان، اسأل سؤال توضيحي واحد فقط ولا تخمن.
-إذا قال المستخدم ارجع أو رجعني أو ودني للصفحة اللي قبل، استخدم أداة navigate_back فورًا بدل شرح الخطوة بالكلام.
-إذا طلب المستخدم فتح المشوار أو البلاغ أو المجتمع، استخدم أداة open_section.
-إذا طلب طريقًا أو قال ودني أو وصلني أو أبي أروح أو روح بي لمكان، استخدم أداة plan_trip دائمًا حتى لو كان المستخدم داخل صفحة البلاغ أو المجتمع.
-إذا جمع المستخدم بين الرجوع والذهاب إلى وجهة واضحة، أعط الأولوية للوجهة واستخدم plan_trip مباشرة ولا تطلب منه الرجوع يدويًا.
+إذا قال المستخدم ارجع أو رجعني أو ودني للصفحة اللي قبل، استخدم navigate_back فورًا.
+إذا طلب فتح المشوار أو البلاغ أو المجتمع، استخدم open_section.
+إذا طلب طريقًا أو قال ودني أو وصلني أو أبي أروح أو روح بي لمكان، استخدم plan_trip دائمًا حتى لو كان داخل صفحة أخرى.
+إذا جمع المستخدم بين الرجوع والذهاب إلى وجهة واضحة، أعط الأولوية للوجهة واستخدم plan_trip مباشرة.
 إذا ذكر أنه كبير سن أو معه كبير سن، فعّل senior في plan_trip.
 إذا ذكر كرسيًا متحركًا أو صعوبة حركة، فعّل wheelchair.
 إذا طلب استراحات أكثر أو تقليل الزحمة، مرر ذلك للأداة.
-في النسخة التجريبية يبدأ تخطيط الرحلات من نقطة ثابتة داخل المدينة المنورة، فلا تطلب إذن موقع الجهاز ولا تقل للمستخدم إنك تحتاج موقعه الحالي.
-لا تعطِ تعليمات ملاحية خطرة.
+إذا سأل عن مدة الرحلة أو كم دقيقة أو كم ساعة أو المسافة أو طول الطريق أو المسار الحالي أو البدائل أو الأريح أو الأسرع، استخدم get_trip_info قبل الإجابة دائمًا.
+لا تخمن مدة أو مسافة، ولا تقل إن البيانات غير موجودة قبل أن تستدعي get_trip_info.
+اعتمد على أرقام get_trip_info كما هي ولا تغيرها من عندك.
+في النسخة التجريبية يبدأ تخطيط الرحلات من نقطة ثابتة داخل المدينة المنورة، فلا تطلب إذن موقع الجهاز.
+لا تعط تعليمات ملاحية خطرة.
 `;
 
 const VOICE_PROFILES = {
   male: {
     voice: "cedar",
-    instruction: "قدّم صوتًا رجاليًا هادئًا وواضحًا بطابع سعودي نجدي محلي، دافئ وغير إذاعي أو رسمي زيادة.",
+    instruction: "قدّم صوتًا رجاليًا بطابع سعودي نجدي محلي، طبيعي وغير إذاعي أو رسمي زيادة.",
   },
   female: {
     voice: "marin",
-    instruction: "قدّمي صوتًا نسائيًا هادئًا وواضحًا بطابع سعودي نجدي محلي، طبيعي وغير إذاعي أو رسمي زيادة.",
+    instruction: "قدّمي صوتًا نسائيًا بطابع سعودي نجدي محلي، طبيعي وغير إذاعي أو رسمي زيادة.",
   },
 } as const;
 
@@ -39,11 +42,7 @@ const tools = [
     type: "function",
     name: "navigate_back",
     description: "ارجع إلى الصفحة السابقة داخل التطبيق عندما يطلب المستخدم الرجوع.",
-    parameters: {
-      type: "object",
-      properties: {},
-      additionalProperties: false,
-    },
+    parameters: { type: "object", properties: {}, additionalProperties: false },
   },
   {
     type: "function",
@@ -52,10 +51,7 @@ const tools = [
     parameters: {
       type: "object",
       properties: {
-        section: {
-          type: "string",
-          enum: ["trip", "report", "community"],
-        },
+        section: { type: "string", enum: ["trip", "report", "community"] },
       },
       required: ["section"],
       additionalProperties: false,
@@ -77,6 +73,12 @@ const tools = [
       required: ["destination", "senior", "wheelchair", "moreRest", "avoidCrowds"],
       additionalProperties: false,
     },
+  },
+  {
+    type: "function",
+    name: "get_trip_info",
+    description: "استرجع بيانات الرحلة الحالية الفعلية مثل المدة والمسافة والمسار المحدد والبدائل قبل الإجابة عن أي سؤال عنها.",
+    parameters: { type: "object", properties: {}, additionalProperties: false },
   },
 ] as const;
 
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
     type: "realtime",
     model: "gpt-realtime-2.1",
     instructions: `${BASE_VOICE_INSTRUCTIONS}\n${profile.instruction}`,
-    max_output_tokens: 220,
+    max_output_tokens: 300,
     output_modalities: ["audio"],
     tool_choice: "auto",
     tools,
@@ -118,14 +120,12 @@ export async function POST(request: NextRequest) {
         },
         turn_detection: {
           type: "semantic_vad",
-          eagerness: "medium",
+          eagerness: "low",
           create_response: true,
           interrupt_response: true,
         },
       },
-      output: {
-        voice: profile.voice,
-      },
+      output: { voice: profile.voice },
     },
   };
 
@@ -136,9 +136,7 @@ export async function POST(request: NextRequest) {
   try {
     const response = await fetch("https://api.openai.com/v1/realtime/calls", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { Authorization: `Bearer ${apiKey}` },
       body: form,
     });
 

@@ -16,6 +16,7 @@ import "./navigation-ux.css";
 import "./voice-assistant.css";
 import "./realtime-voice.css";
 import "./realtime-voice-polish.css";
+import "./realtime-voice-v2.css";
 import { AppHeader } from "@/components/AppHeader";
 import { RealtimeVoiceAssistant } from "@/components/RealtimeVoiceAssistant";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
@@ -35,9 +36,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "ظل المدينة",
   },
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {

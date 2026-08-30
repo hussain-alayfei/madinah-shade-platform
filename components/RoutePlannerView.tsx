@@ -12,6 +12,7 @@ import {
   tripToSearchParams,
   type LiveRoute,
 } from "@/lib/maps";
+import { buildVoiceTripContext, writeVoiceTripContext } from "@/lib/voice-context";
 import { MapView } from "./MapView";
 import { StatusMessage } from "./StatusMessage";
 
@@ -88,6 +89,11 @@ export function RoutePlannerView() {
     setDetailsOpen(false);
     void loadRoutes();
   }, [trip]);
+
+  useEffect(() => {
+    if (!trip || !routes.length) return;
+    writeVoiceTripContext(buildVoiceTripContext(trip, routes, selected));
+  }, [trip, routes, selected]);
 
   if (!trip) {
     return (
