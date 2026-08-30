@@ -26,6 +26,7 @@ export function NavigationExperience() {
   const params = useSearchParams();
   const trip = useMemo(() => parseLiveTrip(params), [params]);
   const requestedRouteId = params.get("route") || "comfortable";
+  const demoMode = trip?.originLabel === "موقعي في المدينة";
   const [route, setRoute] = useState<LiveRoute | null>(null);
   const [activeOrigin, setActiveOrigin] = useState<LatLng | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,11 +86,22 @@ export function NavigationExperience() {
     setHasJoinedRoute(false);
     setStartContext(null);
     setOffRoute(false);
-    void loadRoute();
-  }, [trip, requestedRouteId]);
+    void loadRoute(undefined, demoMode);
+  }, [demoMode, trip, requestedRouteId]);
 
   useEffect(() => {
     if (!trip) return;
+
+    if (demoMode) {
+      setUserPosition({
+        lat: trip.origin.lat,
+        lon: trip.origin.lon,
+        accuracy: 5,
+      });
+      setLocationStatus("tracking");
+      return;
+    }
+
     if (!navigator.geolocation) {
       setLocationStatus("unavailable");
       return;
@@ -114,10 +126,17 @@ export function NavigationExperience() {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [locationAttempt, trip?.origin.lat, trip?.origin.lon, trip?.destination.lat, trip?.destination.lon]);
+  }, [
+    demoMode,
+    locationAttempt,
+    trip?.origin.lat,
+    trip?.origin.lon,
+    trip?.destination.lat,
+    trip?.destination.lon,
+  ]);
 
   async function synchronizeFromCurrent() {
-    if (!userPosition || !trip) return;
+    if (!userPosition || !trip || demoMode) return;
     if (!isWithinMadinahServiceArea(userPosition)) {
       setStartContext("outside");
       setOffRoute(false);
@@ -204,6 +223,7 @@ export function NavigationExperience() {
   }, [
     activeOrigin?.lat,
     activeOrigin?.lon,
+    demoMode,
     hasJoinedRoute,
     route,
     trip,
@@ -259,13 +279,17 @@ export function NavigationExperience() {
         {routeError && (
           <div className="logic-error" role="alert">
             <span>{routeError}</span>
-            <button type="button" className="secondary-action" onClick={() => void loadRoute(userPosition, Boolean(userPosition))}>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => void loadRoute(demoMode ? undefined : userPosition, demoMode || Boolean(userPosition))}
+            >
               <RefreshCw size={16} /> إعادة المحاولة
             </button>
           </div>
         )}
 
-        {startContext && userPosition && !loading && (
+        {startContext && userPosition && !loading && !demoMode && (
           <div className="nav-start-context" role="status">
             <CircleAlert size={19} />
             <div className="nav-start-context__copy">
@@ -304,14 +328,14 @@ export function NavigationExperience() {
               <div className="nav-status">
                 <div><span>المتبقي</span><strong>{formatDuration(remainingMinutes)}</strong></div>
                 <div><span>المسافة</span><strong>{formatDistance(remainingMeters)}</strong></div>
-                <div><span>الموقع</span><strong>{locationStatus === "tracking" ? "متصل" : "غير متصل"}</strong></div>
+                <div><span>الموقع</span><strong>{demoMode ? "جاهز" : locationStatus === "tracking" ? "متصل" : "غير متصل"}</strong></div>
               </div>
               {arrived && <Link href={`/arrival?${arrivalQuery.toString()}`} className="primary-action" style={{ marginTop: 10 }}>إنهاء الرحلة</Link>}
             </div>
           </div>
         )}
 
-        {locationStatus !== "tracking" && (
+        {!demoMode && locationStatus !== "tracking" && (
           <div className="gps-permission-card">
             <LocateFixed size={18} />
             <div>
@@ -324,7 +348,7 @@ export function NavigationExperience() {
           </div>
         )}
 
-        {offRoute && userPosition && hasJoinedRoute && (
+        {offRoute && userPosition && hasJoinedRoute && !demoMode && (
           <div className="nav-decision">
             <CircleAlert size={18} />
             <div className="nav-decision__copy">

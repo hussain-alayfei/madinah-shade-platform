@@ -15,6 +15,7 @@ import "./status-messages.css";
 import "./navigation-ux.css";
 import "./voice-assistant.css";
 import "./realtime-voice.css";
+import "./realtime-voice-polish.css";
 import { AppHeader } from "@/components/AppHeader";
 import { RealtimeVoiceAssistant } from "@/components/RealtimeVoiceAssistant";
 import { VoiceAssistant } from "@/components/VoiceAssistant";

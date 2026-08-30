@@ -1,6 +1,6 @@
 "use client";
 
-import { Keyboard, Mic, MicOff, PhoneOff, Send, Volume2, X } from "lucide-react";
+import { ChevronDown, History as HistoryIcon, Keyboard, Mic, MicOff, PhoneOff, Send, Volume2, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
@@ -36,6 +36,13 @@ type PlanTripArgs = {
 type VoiceProfile = "male" | "female";
 
 const VOICE_PREF_KEY = "madinah-shade-realtime-voice-v1";
+const VOICE_HISTORY_KEY = "madinah-shade-realtime-history-v1";
+const MAX_SAVED_MESSAGES = 60;
+const DEMO_ORIGIN = {
+  lat: 24.4497,
+  lon: 39.6108,
+  label: "موقعي في المدينة",
+};
 
 const sectionRoutes: Record<string, string> = {
   trip: "/",
@@ -43,26 +50,35 @@ const sectionRoutes: Record<string, string> = {
   community: "/community",
 };
 
-function currentPosition() {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("الموقع غير متاح"));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 10_000,
-      maximumAge: 30_000,
-    });
-  });
-}
-
 function friendlyStartError(error: unknown) {
   if (error instanceof DOMException && error.name === "NotAllowedError") {
     return "اسمح باستخدام الميكروفون عشان نبدأ.";
   }
   return "ما قدرنا نشغل الصوت الآن. جرّب مرة ثانية.";
+}
+
+function readSavedHistory(): TranscriptMessage[] {
+  try {
+    const raw = window.localStorage.getItem(VOICE_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item): item is TranscriptMessage => {
+        if (!item || typeof item !== "object") return false;
+        const message = item as Partial<TranscriptMessage>;
+        return (
+          typeof message.id === "number" &&
+          (message.role === "assistant" || message.role === "user") &&
+          typeof message.text === "string" &&
+          Boolean(message.text.trim())
+        );
+      })
+      .slice(-MAX_SAVED_MESSAGES);
+  } catch {
+    return [];
+  }
 }
 
 export function RealtimeVoiceAssistant() {
@@ -76,7 +92,7 @@ export function RealtimeVoiceAssistant() {
   const nextId = useRef(0);
   const partialAssistantRef = useRef("");
   const partialUserRef = useRef("");
-  const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<TranscriptMessage[]>([]);
 
   const [active, setActive] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -87,13 +103,21 @@ export function RealtimeVoiceAssistant() {
   const [partialUser, setPartialUser] = useState("");
   const [partialAssistant, setPartialAssistant] = useState("");
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [currentTurnStart, setCurrentTurnStart] = useState(0);
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>("female");
 
   function addMessage(role: TranscriptMessage["role"], text: string) {
     const clean = text.trim();
     if (!clean) return;
     nextId.current += 1;
-    setMessages((current) => [...current, { id: nextId.current, role, text: clean }]);
+    const message = { id: nextId.current, role, text: clean };
+    setMessages((current) => {
+      const next = [...current, message];
+      messagesRef.current = next;
+      return next;
+    });
   }
 
   function cleanup() {
@@ -121,19 +145,32 @@ export function RealtimeVoiceAssistant() {
   }
 
   useEffect(() => {
+    const savedMessages = readSavedHistory();
+    messagesRef.current = savedMessages;
+    setMessages(savedMessages);
+    setCurrentTurnStart(savedMessages.length);
+    nextId.current = savedMessages.reduce((max, message) => Math.max(max, message.id), 0);
+
     try {
-      const saved = window.localStorage.getItem(VOICE_PREF_KEY);
-      if (saved === "male" || saved === "female") setVoiceProfile(saved);
+      const savedVoice = window.localStorage.getItem(VOICE_PREF_KEY);
+      if (savedVoice === "male" || savedVoice === "female") setVoiceProfile(savedVoice);
     } catch {
-      // The default voice remains available when local storage is blocked.
+      // Keep defaults when local storage is blocked.
     }
 
+    setHistoryLoaded(true);
     return () => cleanup();
   }, []);
 
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ block: "nearest" });
-  }, [messages, partialUser, partialAssistant]);
+    if (!historyLoaded) return;
+    messagesRef.current = messages;
+    try {
+      window.localStorage.setItem(VOICE_HISTORY_KEY, JSON.stringify(messages.slice(-MAX_SAVED_MESSAGES)));
+    } catch {
+      // Conversation remains available for the current visit.
+    }
+  }, [historyLoaded, messages]);
 
   function chooseVoice(profile: VoiceProfile) {
     setVoiceProfile(profile);
@@ -172,6 +209,14 @@ export function RealtimeVoiceAssistant() {
       return;
     }
 
+    if (event.name === "navigate_back") {
+      if (window.history.length > 1) router.back();
+      else router.push("/");
+      sendToolResult(event.call_id, { ok: true, message: "رجعتك للصفحة اللي قبل." });
+      setStatus("تم");
+      return;
+    }
+
     if (event.name === "open_section") {
       const section = typeof args.section === "string" ? args.section : "";
       const href = sectionRoutes[section];
@@ -182,6 +227,7 @@ export function RealtimeVoiceAssistant() {
 
       router.push(href);
       sendToolResult(event.call_id, { ok: true, message: "تم فتح القسم المطلوب." });
+      setStatus("تم");
       return;
     }
 
@@ -195,10 +241,7 @@ export function RealtimeVoiceAssistant() {
 
       setStatus("أجهز لك المشوار…");
       try {
-        const [position, geocodeResponse] = await Promise.all([
-          currentPosition(),
-          fetch(`/api/geocode?q=${encodeURIComponent(destinationName)}`),
-        ]);
+        const geocodeResponse = await fetch(`/api/geocode?q=${encodeURIComponent(destinationName)}`);
         const geocodePayload = (await geocodeResponse.json().catch(() => null)) as
           | { results?: GeocodeResult[] }
           | null;
@@ -217,14 +260,14 @@ export function RealtimeVoiceAssistant() {
         if (plan.avoidCrowds) needs.push("lowCrowd");
 
         const params = new URLSearchParams({
-          fromLat: String(position.coords.latitude),
-          fromLon: String(position.coords.longitude),
+          fromLat: String(DEMO_ORIGIN.lat),
+          fromLon: String(DEMO_ORIGIN.lon),
           toLat: String(destination.lat),
           toLon: String(destination.lon),
-          fromLabel: "موقعي الحالي",
+          fromLabel: DEMO_ORIGIN.label,
           toLabel: destination.label,
           time: "الآن",
-          originMode: "current",
+          originMode: "selected",
         });
         if (needs.length) params.set("needs", needs.join(","));
 
@@ -237,9 +280,9 @@ export function RealtimeVoiceAssistant() {
       } catch {
         sendToolResult(event.call_id, {
           ok: false,
-          message: "ما قدرت أوصل لموقعك. اطلب من المستخدم السماح بالموقع أو تحديد البداية يدويًا.",
+          message: "ما قدرت أجهز المشوار الآن. جرّب مرة ثانية.",
         });
-        setStatus("احتاج إذن الموقع");
+        setStatus("جاهز");
       }
     }
   }
@@ -249,6 +292,8 @@ export function RealtimeVoiceAssistant() {
       const event = JSON.parse(raw) as RealtimeEvent;
 
       if (event.type === "input_audio_buffer.speech_started") {
+        setCurrentTurnStart(messagesRef.current.length);
+        setShowHistory(false);
         partialUserRef.current = "";
         setPartialUser("");
         setStatus("أسمعك…");
@@ -306,7 +351,7 @@ export function RealtimeVoiceAssistant() {
         setStatus("صار خلل بسيط. جرّب مرة ثانية.");
       }
     } catch {
-      // Audio events can include payloads the interface does not need to display.
+      // Ignore realtime payloads that are not needed by the interface.
     }
   }
 
@@ -314,7 +359,8 @@ export function RealtimeVoiceAssistant() {
     if (active || connecting) return;
     setConnecting(true);
     setStatus("أشغل الميكروفون…");
-    setMessages([]);
+    setCurrentTurnStart(messagesRef.current.length);
+    setShowHistory(false);
     setPartialUser("");
     setPartialAssistant("");
     partialUserRef.current = "";
@@ -401,6 +447,8 @@ export function RealtimeVoiceAssistant() {
     const channel = channelRef.current;
     if (!text || !active || channel?.readyState !== "open") return;
 
+    setCurrentTurnStart(messagesRef.current.length);
+    setShowHistory(false);
     addMessage("user", text);
     setDraft("");
     channel.send(
@@ -423,7 +471,9 @@ export function RealtimeVoiceAssistant() {
 
   if (pathname.startsWith("/city")) return null;
 
-  const hasTranscript = messages.length > 0 || Boolean(partialUser) || Boolean(partialAssistant);
+  const currentMessages = messages.slice(currentTurnStart);
+  const historyMessages = messages.slice(0, currentTurnStart);
+  const hasCurrentTranscript = currentMessages.length > 0 || Boolean(partialUser) || Boolean(partialAssistant);
 
   return (
     <>
@@ -495,18 +545,16 @@ export function RealtimeVoiceAssistant() {
               {status}
             </div>
 
-            {(active || hasTranscript) && (
+            {(active || hasCurrentTranscript) && (
               <section
-                className="realtime-voice-transcript realtime-voice-transcript--live"
-                aria-label="نص المحادثة"
-                aria-live="polite"
-                aria-relevant="additions text"
+                className="realtime-voice-transcript realtime-voice-transcript--live realtime-voice-current-turn"
+                aria-label="المحادثة الحالية"
               >
-                {!hasTranscript && active && (
+                {!hasCurrentTranscript && active && (
                   <p className="realtime-voice-empty">كلامك بيظهر هنا.</p>
                 )}
 
-                {messages.slice(-6).map((message) => (
+                {currentMessages.map((message) => (
                   <div key={message.id} className={`realtime-message realtime-message--${message.role}`}>
                     <strong>{message.role === "assistant" ? "المساعد" : "أنت"}</strong>
                     <p>{message.text}</p>
@@ -526,7 +574,6 @@ export function RealtimeVoiceAssistant() {
                     <p>{partialAssistant}<span className="realtime-live-caret" aria-hidden="true" /></p>
                   </div>
                 )}
-                <div ref={transcriptEndRef} />
               </section>
             )}
 
@@ -554,7 +601,19 @@ export function RealtimeVoiceAssistant() {
               </div>
             )}
 
-            <div className="realtime-voice-secondary realtime-voice-secondary--single">
+            <div className={`realtime-voice-secondary ${historyMessages.length ? "" : "realtime-voice-secondary--single"}`}>
+              {historyMessages.length > 0 && (
+                <button
+                  type="button"
+                  className="realtime-history-toggle"
+                  onClick={() => setShowHistory((value) => !value)}
+                  aria-expanded={showHistory}
+                >
+                  <HistoryIcon size={19} aria-hidden="true" />
+                  <span>السجل السابق</span>
+                  <ChevronDown className={showHistory ? "is-open" : ""} size={17} aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowKeyboard((value) => !value)}
@@ -564,6 +623,17 @@ export function RealtimeVoiceAssistant() {
                 <span>{showKeyboard ? "إخفاء الكتابة" : "اكتب بدل الصوت"}</span>
               </button>
             </div>
+
+            {showHistory && historyMessages.length > 0 && (
+              <section className="realtime-voice-history" aria-label="سجل المحادثة السابق">
+                {historyMessages.map((message) => (
+                  <div key={message.id} className={`realtime-message realtime-message--${message.role}`}>
+                    <strong>{message.role === "assistant" ? "المساعد" : "أنت"}</strong>
+                    <p>{message.text}</p>
+                  </div>
+                ))}
+              </section>
+            )}
 
             {showKeyboard && (
               <form className="realtime-voice-form" onSubmit={sendText}>
