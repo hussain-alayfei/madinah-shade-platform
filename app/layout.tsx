@@ -13,7 +13,9 @@ import "./saudi-polish.css";
 import "./premium-rtl.css";
 import "./status-messages.css";
 import "./navigation-ux.css";
+import "./voice-assistant.css";
 import { AppHeader } from "@/components/AppHeader";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 const font = Almarai({
   subsets: ["arabic"],
@@ -48,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={font.className}>
         <AppHeader />
         {children}
+        <VoiceAssistant />
       </body>
     </html>
   );
