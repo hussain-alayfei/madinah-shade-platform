@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Accessibility, ArrowRight, MapPinned, Navigation, RefreshCw, Route, ShieldCheck, Timer } from "lucide-react";
+import { Accessibility, ArrowRight, ChevronDown, Navigation, RefreshCw, Route, Timer } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLiveRoutes, formatDistance, parseLiveTrip, tripToSearchParams, type LiveRoute } from "@/lib/maps";
+import {
+  fetchLiveRoutes,
+  formatDistance,
+  formatDuration,
+  parseLiveTrip,
+  tripToSearchParams,
+  type LiveRoute,
+} from "@/lib/maps";
 import { MapView } from "./MapView";
 import { StatusMessage } from "./StatusMessage";
 import styles from "./RouteDetails.module.css";
@@ -67,52 +74,41 @@ export function RouteDetails() {
             tone="warning"
             title="تعذر تجهيز تفاصيل الطريق"
             description={error}
-            action={(
-              <button type="button" onClick={() => void load()}>
-                <RefreshCw size={14} /> حاول مرة ثانية
-              </button>
-            )}
+            action={<button type="button" onClick={() => void load()}><RefreshCw size={14} /> حاول مرة ثانية</button>}
           />
         )}
 
         {route && (
           <>
             <h1>{route.name}</h1>
-            <p className={styles.description}>{route.description}</p>
+            <p className={styles.description}>{route.profileReason}</p>
 
             <div className={styles.summary}>
-              <div><span>المدة</span><strong>{route.durationMinutes} دقيقة</strong></div>
+              <div><span>المدة</span><strong>{formatDuration(route.durationMinutes)}</strong></div>
               <div><span>المسافة</span><strong>{formatDistance(route.distanceMeters)}</strong></div>
-              <div><span>نوع الرحلة</span><strong>مشي</strong></div>
+              <div><span>الإتاحة</span><strong>{route.wheelchairAware ? "مراعاة أعلى" : "قياسية"}</strong></div>
             </div>
 
-            <section className={styles.section}>
-              <h2>تفاصيل المسار</h2>
-              <div className={styles.fact}><span><Route size={16} /> خط الطريق</span><strong>محسوب لهذه الرحلة</strong></div>
-              <div className={styles.fact}><span><Timer size={16} /> الزمن والمسافة</span><strong>محدّثان مع المسار</strong></div>
-              <div className={styles.fact}><span><MapPinned size={16} /> تعليمات الاتجاهات</span><strong>{route.maneuvers.length} خطوة</strong></div>
-              <div className={styles.fact}><span><Accessibility size={16} /> مراعاة الإتاحة</span><strong>{route.wheelchairAware ? "مفعّلة" : "قياسية"}</strong></div>
-            </section>
+            <details className="route-collapsible">
+              <summary><span>معلومات إضافية</span><ChevronDown size={16} /></summary>
+              <div className="route-collapsible__content">
+                <div className={styles.fact}><span><Route size={16} /> المسار</span><strong>{route.description}</strong></div>
+                <div className={styles.fact}><span><Timer size={16} /> الزمن</span><strong>{formatDuration(route.durationMinutes)}</strong></div>
+                <div className={styles.fact}><span><Accessibility size={16} /> الإتاحة</span><strong>{route.wheelchairAware ? "مراعاة إضافية" : "قياسية"}</strong></div>
+              </div>
+            </details>
 
-            <section className={styles.section}>
-              <h2>بداية الطريق</h2>
-              <div className="maneuver-preview">
-                {route.maneuvers.slice(0, 5).map((maneuver, index) => (
-                  <div className="maneuver-row" key={`${maneuver.beginShapeIndex}-${index}`}>
+            <details className="route-collapsible">
+              <summary><span>خطوات الطريق</span><span>{route.maneuvers.length} خطوة</span><ChevronDown size={16} /></summary>
+              <div className="route-collapsible__content route-steps-list">
+                {route.maneuvers.map((maneuver, index) => (
+                  <div key={`${maneuver.beginShapeIndex}-${index}`}>
                     <span>{index + 1}</span>
-                    <div><strong>{maneuver.instruction}</strong><small>{formatDistance(maneuver.distanceMeters)}</small></div>
+                    <p><strong>{maneuver.instruction}</strong><small>{formatDistance(maneuver.distanceMeters)}</small></p>
                   </div>
                 ))}
               </div>
-            </section>
-
-            <div className="live-source-note" style={{ marginTop: 18 }}>
-              <ShieldCheck size={18} />
-              <div>
-                <strong>نعرض فقط ما هو متاح بدرجة ثقة واضحة.</strong>
-                <span>خصائص الراحة المتقدمة التي تحتاج بيانات تشغيلية إضافية لن تظهر كأنها معلومات مؤكدة قبل اكتمال ربطها.</span>
-              </div>
-            </div>
+            </details>
 
             <div className={styles.actions}>
               <Link href={`/navigate?${tripQuery}&route=${route.id}`} className="primary-action"><Navigation size={18} />ابدأ الرحلة</Link>
@@ -124,7 +120,6 @@ export function RouteDetails() {
       <section className={styles.map} aria-label="تفاصيل المسار على الخريطة">
         <div className="map-frame">
           <MapView routes={route ? [route] : []} selected={route?.id} showAll={false} origin={trip.origin} destination={trip.destination} />
-          <div className="map-context"><strong>{route ? route.name : "جاري تجهيز المسار"}</strong><span>{trip.originLabel} ← {trip.destinationLabel}</span></div>
         </div>
       </section>
     </main>
