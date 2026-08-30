@@ -3,7 +3,17 @@
 import "leaflet/dist/leaflet.css";
 import { Layers3, LocateFixed, ScanLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap, ZoomControl } from "react-leaflet";
+import {
+  AttributionControl,
+  Circle,
+  CircleMarker,
+  MapContainer,
+  Polyline,
+  Popup,
+  TileLayer,
+  useMap,
+  ZoomControl,
+} from "react-leaflet";
 import type { LatLng, LiveRoute, UserPosition } from "@/lib/maps";
 
 const MEDINA_CENTER: [number, number] = [24.4672, 39.6112];
@@ -141,8 +151,8 @@ export function MapClient({
         zoom={routes.length ? 16 : 15}
         scrollWheelZoom
         zoomControl={false}
-        className="route-map"
-        attributionControl
+        className="route-map route-map--rtl"
+        attributionControl={false}
       >
         {baseLayer === "standard" ? (
           <TileLayer
@@ -159,7 +169,8 @@ export function MapClient({
           />
         )}
 
-        <ZoomControl position="bottomleft" />
+        <ZoomControl position="topleft" />
+        <AttributionControl position="bottomleft" prefix={false} />
         <ViewportController
           selectedRoute={selectedRoute}
           action={viewAction}
@@ -225,14 +236,14 @@ export function MapClient({
         )}
       </MapContainer>
 
-      <div className="map-control-dock" aria-label="أدوات الخريطة">
+      <div className="map-control-dock" aria-label="أدوات الخريطة" dir="rtl">
         <div className="map-control-group">
           <button
             type="button"
             className="map-control-button"
             onClick={() => runViewAction("center")}
             aria-label={userPosition ? "الرجوع إلى موقعي" : "توسيط الخريطة"}
-            title={userPosition ? "موقعي" : "توسيط"}
+            title={userPosition ? "موقعي" : "توسيط الخريطة"}
           >
             <LocateFixed size={18} />
             <span>{userPosition ? "موقعي" : "توسيط"}</span>
@@ -243,11 +254,11 @@ export function MapClient({
               type="button"
               className="map-control-button"
               onClick={() => runViewAction("fit")}
-              aria-label="عرض المسار كاملًا"
-              title="كل المسار"
+              aria-label="إظهار المسار كاملًا"
+              title="المسار كاملًا"
             >
               <ScanLine size={18} />
-              <span>كل المسار</span>
+              <span>المسار كاملًا</span>
             </button>
           )}
         </div>
@@ -256,12 +267,12 @@ export function MapClient({
           type="button"
           className={`map-control-button map-layer-toggle ${baseLayer === "aerial" ? "is-active" : ""}`}
           onClick={() => setBaseLayer((current) => current === "standard" ? "aerial" : "standard")}
-          aria-label={baseLayer === "standard" ? "التبديل إلى العرض الجوي" : "التبديل إلى عرض الشوارع"}
+          aria-label={baseLayer === "standard" ? "عرض الصور الجوية" : "عرض خريطة الشوارع"}
           aria-pressed={baseLayer === "aerial"}
-          title={baseLayer === "standard" ? "عرض جوي" : "شوارع"}
+          title={baseLayer === "standard" ? "صور جوية" : "خريطة الشوارع"}
         >
           <Layers3 size={18} />
-          <span>{baseLayer === "standard" ? "جوي" : "شوارع"}</span>
+          <span>{baseLayer === "standard" ? "صور جوية" : "الشوارع"}</span>
         </button>
       </div>
     </>
