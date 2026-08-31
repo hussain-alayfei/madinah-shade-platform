@@ -18,6 +18,7 @@ import "./realtime-voice.css";
 import "./realtime-voice-polish.css";
 import "./realtime-voice-v2.css";
 import "./mobile-stability.css";
+import "./voice-launcher-position.css";
 import { AppHeader } from "@/components/AppHeader";
 import { RealtimeVoiceAssistant } from "@/components/RealtimeVoiceAssistant";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
