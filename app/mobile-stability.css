@@ -29,17 +29,26 @@
 }
 
 @media (max-width: 640px) {
-  /* The launcher becomes a small mobile FAB so it never fights the bottom tab bar. */
+  /* Keep the assistant attached to the app chrome, not floating over route/map actions. */
   .realtime-voice-launcher {
-    left: max(12px, env(safe-area-inset-left));
-    bottom: calc(var(--mobile-tab-height, 66px) + 12px + env(safe-area-inset-bottom));
-    width: 52px;
-    height: 52px;
-    min-height: 52px;
+    position: fixed;
+    left: max(14px, env(safe-area-inset-left));
+    right: auto;
+    bottom: calc(var(--mobile-tab-height, 66px) + max(16px, env(safe-area-inset-bottom)));
+    width: clamp(44px, 12vw, 50px);
+    height: clamp(44px, 12vw, 50px);
+    min-width: 44px;
+    min-height: 44px;
     padding: 0;
     gap: 0;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(16, 47, 40, 0.18);
+    border-radius: clamp(13px, 3.8vw, 16px);
+    box-shadow: 0 7px 20px rgba(16, 47, 40, 0.16);
+    z-index: 720;
+  }
+
+  .realtime-voice-launcher svg {
+    width: clamp(19px, 5.2vw, 22px);
+    height: clamp(19px, 5.2vw, 22px);
   }
 
   .realtime-voice-launcher strong {
@@ -52,6 +61,13 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* Immersive route screens have their own controls; keep the global assistant out of that control stack. */
+  body:has(.route-map-screen) .realtime-voice-launcher,
+  body:has(.navigation-experience) .realtime-voice-launcher,
+  body:has(.navigation-shell) .realtime-voice-launcher {
+    display: none;
   }
 
   /* Native dialog defaults center themselves; force an actual edge-to-edge app surface. */
@@ -244,6 +260,11 @@
 }
 
 @media (max-width: 380px) {
+  .realtime-voice-launcher {
+    left: max(10px, env(safe-area-inset-left));
+    bottom: calc(var(--mobile-tab-height, 66px) + max(12px, env(safe-area-inset-bottom)));
+  }
+
   .realtime-voice-header--v2 {
     padding-inline: 10px;
   }
