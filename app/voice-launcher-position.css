@@ -1,0 +1,43 @@
+/* Final launcher placement: responsive, clear of route controls and mobile navigation. */
+
+@media (max-width: 640px) {
+  .realtime-voice-launcher {
+    top: calc(env(safe-area-inset-top) + var(--header-height, 56px) + 10px);
+    bottom: auto;
+    left: max(12px, env(safe-area-inset-left));
+    right: auto;
+    width: clamp(46px, 13vw, 52px);
+    height: clamp(46px, 13vw, 52px);
+    min-height: 0;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  .realtime-voice-launcher svg {
+    width: clamp(19px, 5.5vw, 22px);
+    height: clamp(19px, 5.5vw, 22px);
+  }
+
+  /* Route selection and live navigation already have dense map controls.
+     Keep the assistant available elsewhere instead of covering the map UX. */
+  body:has(.route-map-screen) .realtime-voice-launcher,
+  body:has(.navigation-shell--stable) .realtime-voice-launcher {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .realtime-voice-launcher {
+    top: calc(env(safe-area-inset-top) + var(--header-height, 56px) + 8px);
+    left: max(10px, env(safe-area-inset-left));
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (min-width: 641px) {
+  .realtime-voice-launcher {
+    left: clamp(18px, 2vw, 28px);
+    bottom: clamp(18px, 2vw, 28px);
+  }
+}
