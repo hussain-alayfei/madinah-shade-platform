@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { latLngBounds } from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Circle, CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { categoryLabel, type CitySignal } from "@/lib/city-dashboard";
 
@@ -13,26 +13,68 @@ const categoryColors: Record<CitySignal["category"], string> = {
   services: "#506a61",
 };
 
-function CityViewportSync({ signals, selectedId }: { signals: CitySignal[]; selectedId?: string }) {
+/**
+ * Keep the city map stable when React state changes.
+ *
+ * Previously every selected signal triggered flyTo(), while changing filters or
+ * intervention state could also trigger fitBounds(). On mobile that meant two
+ * competing camera animations and visible circle redraws. The map now fits only
+ * when the actual set of map points changes; selecting a point only highlights it.
+ */
+function CityMapStability({ signals }: { signals: CitySignal[] }) {
   const map = useMap();
+  const lastDatasetKey = useRef("");
+  const resizeFrame = useRef<number>();
+
+  const datasetKey = useMemo(
+    () =>
+      signals
+        .map((signal) => `${signal.id}:${signal.coordinates[0].toFixed(5)}:${signal.coordinates[1].toFixed(5)}`)
+        .sort()
+        .join("|"),
+    [signals],
+  );
 
   useEffect(() => {
-    const selected = signals.find((signal) => signal.id === selectedId);
-    if (selected) {
-      map.flyTo(selected.coordinates, Math.max(map.getZoom(), 17), { duration: 0.55 });
-      return;
-    }
+    if (!signals.length || datasetKey === lastDatasetKey.current) return;
+    lastDatasetKey.current = datasetKey;
 
-    if (signals.length === 1) {
-      map.flyTo(signals[0].coordinates, 17, { duration: 0.45 });
-      return;
-    }
+    const frame = window.requestAnimationFrame(() => {
+      map.invalidateSize({ animate: false, pan: false });
 
-    if (signals.length > 1) {
+      if (signals.length === 1) {
+        map.setView(signals[0].coordinates, 16, { animate: false });
+        return;
+      }
+
       const bounds = latLngBounds(signals.map((signal) => signal.coordinates));
-      map.fitBounds(bounds.pad(0.28), { animate: true, duration: 0.45, maxZoom: 16 });
-    }
-  }, [map, selectedId, signals]);
+      map.fitBounds(bounds.pad(0.22), {
+        animate: false,
+        maxZoom: 16,
+        padding: [24, 24],
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [datasetKey, map, signals]);
+
+  useEffect(() => {
+    const container = map.getContainer();
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(() => {
+      if (resizeFrame.current) window.cancelAnimationFrame(resizeFrame.current);
+      resizeFrame.current = window.requestAnimationFrame(() => {
+        map.invalidateSize({ animate: false, pan: false });
+      });
+    });
+
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      if (resizeFrame.current) window.cancelAnimationFrame(resizeFrame.current);
+    };
+  }, [map]);
 
   return null;
 }
@@ -51,7 +93,8 @@ export function CityMapClient({
       center={[24.4696, 39.6135]}
       zoom={16}
       scrollWheelZoom
-      className="route-map"
+      preferCanvas
+      className="route-map city-stable-map"
       attributionControl
     >
       <TileLayer
@@ -59,7 +102,7 @@ export function CityMapClient({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <CityViewportSync signals={signals} selectedId={selectedId} />
+      <CityMapStability signals={signals} />
 
       {signals.map((signal) => {
         const selected = signal.id === selectedId;
@@ -69,15 +112,17 @@ export function CityMapClient({
             key={signal.id}
             center={signal.coordinates}
             radius={signal.radiusMeters}
+            bubblingMouseEvents={false}
             pathOptions={{
               color,
               fillColor: color,
-              fillOpacity: selected ? 0.25 : 0.13,
-              weight: selected ? 4 : 2,
+              fillOpacity: selected ? 0.24 : 0.12,
+              opacity: selected ? 1 : 0.82,
+              weight: selected ? 3 : 2,
             }}
             eventHandlers={{ click: () => onSelect?.(signal.id) }}
           >
-            <Popup>
+            <Popup autoPan={false} keepInView={false}>
               <strong>{signal.title}</strong>
               <br />
               {signal.location}
@@ -91,9 +136,10 @@ export function CityMapClient({
       <CircleMarker
         center={[24.46775, 39.61645]}
         radius={6}
+        bubblingMouseEvents={false}
         pathOptions={{ color: "#ffffff", fillColor: "#0f6b54", fillOpacity: 1, weight: 3 }}
       >
-        <Popup>نقطة مرجعية للنطاق التجريبي</Popup>
+        <Popup autoPan={false}>نقطة مرجعية للنطاق التجريبي</Popup>
       </CircleMarker>
     </MapContainer>
   );
