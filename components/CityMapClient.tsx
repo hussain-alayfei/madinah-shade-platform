@@ -24,7 +24,7 @@ const categoryColors: Record<CitySignal["category"], string> = {
 function CityMapStability({ signals }: { signals: CitySignal[] }) {
   const map = useMap();
   const lastDatasetKey = useRef("");
-  const resizeFrame = useRef<number>();
+  const resizeFrame = useRef<number | null>(null);
 
   const datasetKey = useMemo(
     () =>
@@ -63,16 +63,17 @@ function CityMapStability({ signals }: { signals: CitySignal[] }) {
     if (typeof ResizeObserver === "undefined") return;
 
     const observer = new ResizeObserver(() => {
-      if (resizeFrame.current) window.cancelAnimationFrame(resizeFrame.current);
+      if (resizeFrame.current !== null) window.cancelAnimationFrame(resizeFrame.current);
       resizeFrame.current = window.requestAnimationFrame(() => {
         map.invalidateSize({ animate: false, pan: false });
+        resizeFrame.current = null;
       });
     });
 
     observer.observe(container);
     return () => {
       observer.disconnect();
-      if (resizeFrame.current) window.cancelAnimationFrame(resizeFrame.current);
+      if (resizeFrame.current !== null) window.cancelAnimationFrame(resizeFrame.current);
     };
   }, [map]);
 
